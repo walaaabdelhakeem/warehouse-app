@@ -20,7 +20,7 @@ import { CommonModule } from '@angular/common';
     AppRoutingModule,
     ReactiveFormsModule,
     HttpClientModule,
-    CommonModule
+    CommonModule,
     
   ],
   exports: [PurchaseOrdersComponent],

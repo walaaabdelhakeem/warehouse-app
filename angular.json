@@ -37,9 +37,9 @@
               "entry": "src/server.ts"
             }
           },
-          "configurations": {
-            "production": {
-              "budgets": [
+        "configurations": {
+  "production": {
+    "budgets": [
                 {
                   "type": "initial",
                   "maximumWarning": "500kB",
@@ -51,14 +51,23 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
-            },
-            "development": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true
-            }
-          },
+    "outputHashing": "all",
+    "aot": true,
+    "buildOptimizer": true,
+    "optimization": true,
+    "vendorChunk": false,
+    "extractLicenses": true,
+    "sourceMap": false,
+    "namedChunks": false
+  },
+  "development": {
+    "aot": false,
+    "optimization": false,
+    "extractLicenses": false,
+    "sourceMap": true
+  }
+}
+,
           "defaultConfiguration": "production"
         },
         "serve": {

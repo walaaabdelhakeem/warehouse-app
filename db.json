@@ -48,26 +48,56 @@
       "id": "d20f",
       "itemName": "صنف 6",
       "stockNumber": "1006"
+    },
+    {
+      "id": "73a4",
+      "itemName": "لاب توب",
+      "stockNumber": "1010"
     }
   ],
   "units": [
     {
       "id": "1",
       "unitName": "وحدة 1",
-      "unitNumber": "U1"
+      "unitNumber": "1"
     },
     {
       "id": "2",
       "unitName": "وحدة 2",
-      "unitNumber": "U2"
+      "unitNumber": "2"
     },
     {
       "id": "3",
       "unitName": "وحدة 3",
-      "unitNumber": "U3"
+      "unitNumber": "3"
+    },
+    {
+      "id": "b38f",
+      "unitName": "وحده الجيوش",
+      "unitNumber": "5"
     }
   ],
-  "orders": [],
+  "orders": [
+    {
+      "id": "04f5",
+      "orderType": "Order",
+      "orderNumber": "11",
+      "items": [
+        {
+          "itemName": "جهاز",
+          "stockNumber": "2",
+          "quantity": 1,
+          "serialNumbers": ""
+        },
+        {
+          "itemName": "لاب",
+          "stockNumber": "2",
+          "quantity": 1,
+          "serialNumbers": ""
+        }
+      ]
+    }
+  ],
   "openingBalances": [],
   "issuePermits": [],
   "dispatches": [],

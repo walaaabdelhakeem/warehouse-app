@@ -53,14 +53,14 @@
       "id": "73a4",
       "itemName": "لاب توب",
       "stockNumber": "1010"
+    },
+    {
+      "id": "532e",
+      "itemName": "كمبيوتر",
+      "stockNumber": "9"
     }
   ],
   "units": [
-    {
-      "id": "1",
-      "unitName": "وحدة 1",
-      "unitNumber": "1"
-    },
     {
       "id": "2",
       "unitName": "وحدة 2",
@@ -75,6 +75,11 @@
       "id": "b38f",
       "unitName": "وحده الجيوش",
       "unitNumber": "5"
+    },
+    {
+      "id": "81c6",
+      "unitName": "وحده الجيوش",
+      "unitNumber": "10"
     }
   ],
   "orders": [
@@ -92,6 +97,38 @@
         {
           "itemName": "لاب",
           "stockNumber": "2",
+          "quantity": 1,
+          "serialNumbers": ""
+        }
+      ]
+    },
+    {
+      "id": "c7f2",
+      "orderType": "Order",
+      "orderNumber": "50",
+      "items": [
+        {
+          "itemName": "لاب",
+          "stockNumber": "5",
+          "quantity": 2,
+          "serialNumbers": ""
+        },
+        {
+          "itemName": "كمبيوتر",
+          "stockNumber": "10",
+          "quantity": 3,
+          "serialNumbers": ""
+        }
+      ]
+    },
+    {
+      "id": "9ecb",
+      "orderType": "Support",
+      "orderNumber": "20",
+      "items": [
+        {
+          "itemName": "لاب",
+          "stockNumber": "20",
           "quantity": 1,
           "serialNumbers": ""
         }

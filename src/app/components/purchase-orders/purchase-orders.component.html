@@ -11,7 +11,7 @@
         <div *ngIf="submitted && orderForm.get('orderType')?.invalid" class="text-danger small mt-1">نوع التعاميد مطلوب</div>
       </div>
       <div class="col-md-4">
-        <label for="orderNumber" class="form-label">رقم التعاميد</label>
+        <label for="orderNumber" class="form-label">رقمه </label>
         <input id="orderNumber" type="text" class="form-control" formControlName="orderNumber" [ngClass]="{'is-invalid': submitted && orderForm.get('orderNumber')?.invalid}">
         <div *ngIf="submitted && orderForm.get('orderNumber')?.invalid" class="text-danger small mt-1">رقم التعاميد مطلوب</div>
       </div>
@@ -50,7 +50,7 @@
         <i class="bi bi-plus-circle"></i> إضافة صنف آخر
       </button>
     </div>
-    <button class="btn btn-success mt-4 w-100 fs-5" type="submit">حفظ التعاميد</button>
+    <button class="btn btn-success mt-4 w-100 fs-5" type="submit"> اضافه</button>
   </form>
 
   <h4 class="mb-3">سجل التعاميد</h4>
@@ -59,7 +59,7 @@
       <thead class="table-light">
         <tr>
           <th>نوع التعاميد</th>
-          <th>رقم التعاميد</th>
+          <th>رقمه</th>
           <th>عدد الأصناف</th>
           <th>تفاصيل الأصناف</th>
         </tr>

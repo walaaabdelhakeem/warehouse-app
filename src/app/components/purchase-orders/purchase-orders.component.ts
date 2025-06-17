@@ -23,8 +23,8 @@ export class PurchaseOrdersComponent {
 
   orderTypes = [
     { label: 'تعميد', value: 'Order' },
-    { label: 'دعم', value: 'Support' },
-    { label: 'أخرى', value: 'Other' }
+    { label: 'امر شراء', value: 'Support' },
+    { label: 'دعم ', value: 'Other' }
   ];
 
   constructor(private fb: FormBuilder, private http: HttpClient) {

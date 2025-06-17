@@ -1,0 +1,87 @@
+<div class="container py-5" dir="rtl">
+  <h2 class="mb-4 text-center">تسجيل تعميد / دعم جديد</h2>
+  <form [formGroup]="orderForm" (ngSubmit)="onSubmit()" class="mb-4">
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label for="orderType" class="form-label">نوع التعاميد</label>
+        <select id="orderType" class="form-select" formControlName="orderType" [ngClass]="{'is-invalid': submitted && orderForm.get('orderType')?.invalid}">
+          <option value="">اختر النوع</option>
+          <option *ngFor="let type of orderTypes" [value]="type.value">{{ type.label }}</option>
+        </select>
+        <div *ngIf="submitted && orderForm.get('orderType')?.invalid" class="text-danger small mt-1">نوع التعاميد مطلوب</div>
+      </div>
+      <div class="col-md-4">
+        <label for="orderNumber" class="form-label">رقم التعاميد</label>
+        <input id="orderNumber" type="text" class="form-control" formControlName="orderNumber" [ngClass]="{'is-invalid': submitted && orderForm.get('orderNumber')?.invalid}">
+        <div *ngIf="submitted && orderForm.get('orderNumber')?.invalid" class="text-danger small mt-1">رقم التعاميد مطلوب</div>
+      </div>
+    </div>
+    <h5 class="mt-4 mb-3">الأصناف في التعاميد</h5>
+    <div formArrayName="items">
+      <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="row g-3 align-items-end mb-2 border rounded p-3 bg-light">
+        <div class="col-md-3">
+          <label class="form-label">اسم الصنف</label>
+          <input type="text" class="form-control" formControlName="itemName" [ngClass]="{'is-invalid': submitted && item.get('itemName')?.invalid}">
+          <div *ngIf="submitted && item.get('itemName')?.invalid" class="text-danger small mt-1">اسم الصنف مطلوب</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">رقم الصنف</label>
+          <input type="text" class="form-control" formControlName="stockNumber" [ngClass]="{'is-invalid': submitted && item.get('stockNumber')?.invalid}">
+          <div *ngIf="submitted && item.get('stockNumber')?.invalid" class="text-danger small mt-1">رقم الصنف مطلوب</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">الكمية</label>
+          <input type="number" min="1" class="form-control" formControlName="quantity" [ngClass]="{'is-invalid': submitted && item.get('quantity')?.invalid}">
+          <div *ngIf="submitted && item.get('quantity')?.invalid" class="text-danger small mt-1">الكمية مطلوبة ويجب أن تكون رقمًا موجبًا</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">الأرقام التسلسلية (اختياري)</label>
+          <input type="text" class="form-control" formControlName="serialNumbers" placeholder="مثال: 123, 456, ...">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="button" class="btn btn-danger w-100" (click)="removeItem(i)" *ngIf="items.length > 1">
+            <i class="bi bi-trash"></i> حذف
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex justify-content-end mt-2">
+      <button type="button" class="btn btn-outline-primary" (click)="addItem()">
+        <i class="bi bi-plus-circle"></i> إضافة صنف آخر
+      </button>
+    </div>
+    <button class="btn btn-success mt-4 w-100 fs-5" type="submit">حفظ التعاميد</button>
+  </form>
+
+  <h4 class="mb-3">سجل التعاميد</h4>
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped text-center align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>نوع التعاميد</th>
+          <th>رقم التعاميد</th>
+          <th>عدد الأصناف</th>
+          <th>تفاصيل الأصناف</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders">
+          <td>{{ orderTypes.find(t => t.value === order.orderType)?.label || order.orderType }}</td>
+          <td>{{ order.orderNumber }}</td>
+          <td>{{ order.items.length }}</td>
+          <td>
+            <ul class="list-unstyled mb-0">
+              <li *ngFor="let item of order.items">
+                <span class="fw-bold">{{ item.itemName }}</span> ({{ item.stockNumber }}) - الكمية: {{ item.quantity }}
+                <span *ngIf="item.serialNumbers">- أرقام تسلسلية: {{ item.serialNumbers }}</span>
+              </li>
+            </ul>
+          </td>
+        </tr>
+        <tr *ngIf="orders.length === 0">
+          <td colspan="4">لا توجد تعاميد مسجلة بعد</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

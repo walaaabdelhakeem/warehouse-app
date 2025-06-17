@@ -1,0 +1,33 @@
+/* Modern Bootstrap login styles with RTL support */
+.login-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%);
+  direction: rtl;
+}
+.login-form {
+  max-width: 370px;
+  width: 100%;
+  background: #fff;
+  padding: 2.5rem 2rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 8px 32px rgba(60, 72, 100, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+input.ng-invalid.ng-touched, input.ng-invalid.ng-dirty {
+  border-color: #dc3545;
+}
+.btn-primary {
+  background: linear-gradient(90deg, #4f8cff 0%, #3358e6 100%);
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: background 0.2s;
+}
+.btn-primary:hover {
+  background: linear-gradient(90deg, #3358e6 0%, #4f8cff 100%);
+}
+.text-danger {
+  font-size: 0.95rem;
+}

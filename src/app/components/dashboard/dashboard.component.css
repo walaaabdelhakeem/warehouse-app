@@ -1,0 +1,27 @@
+.dashboard-container {
+  padding: 2rem;
+}
+
+/* Sidebar and dashboard responsive design */
+.sidebar {
+  min-height: 300px;
+  min-width: 180px;
+}
+.sidebar-link {
+  color: #333;
+  border-radius: 0.5rem;
+  transition: background 0.2s, color 0.2s;
+}
+.sidebar-link.active, .sidebar-link:hover {
+  background: #f0f4ff;
+  color: #0d6efd;
+}
+@media (max-width: 767.98px) {
+  .sidebar {
+    min-width: 100%;
+    margin-bottom: 1rem;
+  }
+}
+.card {
+  border-radius: 1rem;
+}

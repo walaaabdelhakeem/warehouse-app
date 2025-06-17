@@ -1,0 +1,14 @@
+.item-entry-container {
+  padding: 2rem;
+}
+
+/* Modern Bootstrap RTL styles for item entry */
+.container[dir="rtl"] {
+  direction: rtl;
+}
+.is-invalid {
+  border-color: #dc3545;
+}
+.table th, .table td {
+  vertical-align: middle;
+}

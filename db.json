@@ -1,0 +1,106 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "username": "admin",
+      "password": "admin123",
+      "role": "Admin"
+    },
+    {
+      "id": "2",
+      "username": "user",
+      "password": "user123",
+      "role": "User"
+    }
+  ],
+  "items": [
+    {
+      "id": "1",
+      "itemName": "صنف 1",
+      "stockNumber": "1001"
+    },
+    {
+      "id": "2",
+      "itemName": "صنف 2",
+      "stockNumber": "1002"
+    },
+    {
+      "id": "3",
+      "itemName": "صنف 3",
+      "stockNumber": "1003"
+    },
+    {
+      "id": "4",
+      "itemName": "صنف 4",
+      "stockNumber": "1004"
+    },
+    {
+      "id": "5",
+      "itemName": "صنف 5",
+      "stockNumber": "1005"
+    },
+    {
+      "id": "ae78",
+      "itemName": "جهاز",
+      "stockNumber": "10"
+    },
+    {
+      "id": "d20f",
+      "itemName": "صنف 6",
+      "stockNumber": "1006"
+    }
+  ],
+  "units": [
+    {
+      "id": "1",
+      "unitName": "وحدة 1",
+      "unitNumber": "U1"
+    },
+    {
+      "id": "2",
+      "unitName": "وحدة 2",
+      "unitNumber": "U2"
+    },
+    {
+      "id": "3",
+      "unitName": "وحدة 3",
+      "unitNumber": "U3"
+    }
+  ],
+  "orders": [],
+  "openingBalances": [],
+  "issuePermits": [],
+  "dispatches": [],
+  "expenses": [
+    {
+      "id": "1",
+      "unitName": "وحدة 1",
+      "amount": 300
+    },
+    {
+      "id": "2",
+      "unitName": "وحدة 2",
+      "amount": 50
+    },
+    {
+      "id": "3",
+      "unitName": "وحدة 3",
+      "amount": 100
+    }
+  ],
+  "returns": [
+    {
+      "id": "1",
+      "itemName": "صنف 1",
+      "quantity": 2
+    },
+    {
+      "id": "2",
+      "itemName": "صنف 2",
+      "quantity": 1
+    }
+  ],
+  "transfers": [],
+  "disposals": [],
+  "reports": []
+}

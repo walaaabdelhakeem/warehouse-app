@@ -1,0 +1,55 @@
+<div class="container-fluid py-5" dir="rtl">
+  <div class="row">
+    <!-- Sidebar -->
+    <nav class="col-12 col-md-3 col-lg-2 mb-4 mb-md-0">
+      <div class="sidebar bg-white rounded shadow-sm p-3 h-100 sticky-top">
+        <div class="text-center mb-4">
+          <a [routerLink]="['/dashboard']">
+            <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/Warehouse%20Manager%20Logo.png" alt="شعار مدير المستودع" style="max-width: 100px; max-height: 100px;">
+          </a>
+        </div>
+        <h5 class="mb-4 text-center">القائمة الرئيسية</h5>
+        <ul class="nav flex-column gap-2">
+          <li class="nav-item" *ngFor="let feature of features">
+            <a [routerLink]="feature.link" routerLinkActive="active" class="nav-link d-flex align-items-center gap-2 fs-6 sidebar-link">
+              <i [class]="feature.icon + ' fs-5'"></i>
+              <span>{{ feature.label }}</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <!-- Main Content -->
+    <main class="col-12 col-md-9 col-lg-10">
+      <ng-container *ngIf="!isChildRouteActive()">
+        <h2 class="mb-4 text-center">لوحة تحكم مدير المستودع</h2>
+        <div class="row g-4 mb-5">
+          <div class="col-12 col-md-6 col-lg-3" *ngFor="let stat of stats">
+            <div class="card text-center shadow-sm">
+              <div class="card-body">
+                <i [class]="stat.icon + ' display-4 mb-2'" [ngClass]="stat.color"></i>
+                <h5 class="card-title">{{ stat.label }}</h5>
+                <p class="card-text fs-4">{{ stat.value }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row g-4 mb-5">
+          <div class="col-12 col-lg-6">
+            <div class="card shadow-sm p-3">
+              <h5 class="mb-3">نظرة عامة على الأصناف</h5>
+              <canvas id="itemsChart" height="180"></canvas>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="card shadow-sm p-3">
+              <h5 class="mb-3">مصروفات الشهر حسب الوحدة</h5>
+              <canvas id="expensesChart" height="180"></canvas>
+            </div>
+          </div>
+        </div>        
+      </ng-container>
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

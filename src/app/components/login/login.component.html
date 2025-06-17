@@ -1,0 +1,29 @@
+<div class="login-wrapper d-flex align-items-center justify-content-center min-vh-100">
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+    <div class="text-center mb-3">
+      <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/Warehouse%20Manager%20Logo.png" alt="شعار مدير المستودع" style="max-width: 120px; max-height: 120px;">
+    </div>
+    <h2 class="mb-4 text-center">تسجيل الدخول</h2>
+    <div class="mb-3">
+      <label for="username" class="form-label">اسم المستخدم</label>
+      <input id="username" type="text" class="form-control" formControlName="username" autocomplete="username" [ngClass]="{'is-invalid': (f.username.touched || submitted) && f.username.invalid}">
+      <div *ngIf="(f.username.touched || submitted) && f.username.invalid" class="text-danger small mt-1">
+        <div *ngIf="f.username.errors?.required">اسم المستخدم مطلوب</div>
+        <div *ngIf="f.username.errors?.minlength">الحد الأدنى 3 أحرف</div>
+        <div *ngIf="f.username.errors?.maxlength">الحد الأقصى 20 حرفًا</div>
+        <div *ngIf="f.username.errors?.pattern">يسمح فقط بالحروف والأرقام و _</div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">كلمة المرور</label>
+      <input id="password" type="password" class="form-control" formControlName="password" autocomplete="current-password" [ngClass]="{'is-invalid': (f.password.touched || submitted) && f.password.invalid}">
+      <div *ngIf="(f.password.touched || submitted) && f.password.invalid" class="text-danger small mt-1">
+        <div *ngIf="f.password.errors?.required">كلمة المرور مطلوبة</div>
+        <div *ngIf="f.password.errors?.minlength">الحد الأدنى 4 أحرف</div>
+        <div *ngIf="f.password.errors?.maxlength">الحد الأقصى 32 حرفًا</div>
+      </div>
+    </div>
+    <button class="btn btn-primary w-100" type="submit">تسجيل الدخول</button>
+    <div *ngIf="errorMsg" class="text-danger text-center mt-3">{{ errorMsg }}</div>
+  </form>
+</div>

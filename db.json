@@ -98,7 +98,15 @@
       ]
     }
   ],
-  "openingBalances": [],
+  "openingBalances": [
+    {
+      "id": "151a",
+      "stockNumber": "cgf",
+      "quantityAvailable": 6655,
+      "serialNumbers": "fytf",
+      "linkedToOrder": false
+    }
+  ],
   "issuePermits": [],
   "dispatches": [],
   "expenses": [

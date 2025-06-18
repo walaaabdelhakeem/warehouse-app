@@ -1,4 +1,87 @@
-<div class="add-expense-container">
-  <h2>Add Expense</h2>
-  <!-- Add expense form here -->
+<div class="container mt-4">
+  <h2 class="text-center text-primary">إضافة مصروف</h2>
+  <form [formGroup]="addExpenseForm" (ngSubmit)="saveExpense()" class="shadow p-4 rounded bg-light">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="unitName" class="form-label">اسم الوحدة</label>
+        <select id="unitName" class="form-select" formControlName="unitName" required>
+          <option value="">اختر الوحدة</option>
+          <option *ngFor="let unit of availableUnits" [value]="unit.unitName">{{ unit.unitName }}</option>
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="receiver" class="form-label">المستلم</label>
+        <input type="text" id="receiver" class="form-control" formControlName="receiver" required>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="type" class="form-label">النوع</label>
+        <select id="type" class="form-select" formControlName="type" required>
+          <option value="">اختر النوع</option>
+          <option value="Transfer">تحويل</option>
+          <option value="Regular">عادي</option>
+          <option value="Custom">مخصص</option>
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label for="documentNumber" class="form-label">رقم المستند</label>
+        <input type="text" id="documentNumber" class="form-control" formControlName="documentNumber" required>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="items" class="form-label">العناصر</label>
+      <div *ngFor="let item of items.controls; let i = index" [formGroup]="item" class="d-flex align-items-center mb-2">
+        <select class="form-select me-2" formControlName="itemName" required>
+          <option value="">اختر العنصر</option>
+          <option *ngFor="let availableItem of availableItems" [value]="availableItem.itemName">{{ availableItem.itemName }}</option>
+        </select>
+        <input type="number" class="form-control me-2" formControlName="quantity" placeholder="الكمية" required>
+        <button type="button" class="btn btn-danger" (click)="items.removeAt(i)">حذف</button>
+      </div>
+      <button type="button" class="btn btn-secondary" (click)="addItem({ itemName: '', quantity: null })">إضافة عنصر</button>
+    </div>
+
+    <div class="mb-3">
+      <label for="attachment" class="form-label">إرفاق ملف (PDF أو صورة)</label>
+      <input type="file" id="attachment" class="form-control" (change)="handleFileInput($event)" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100" [disabled]="!addExpenseForm.valid">إضافة المصروف</button>
+  </form>
+
+  <h3 class="mt-4 text-primary">المصروفات</h3>
+  <table class="table table-bordered table-hover">
+    <thead class="table-primary">
+      <tr>
+        <th>اسم الوحدة</th>
+        <th>العناصر</th>
+        <th>المستلم</th>
+        <th>النوع</th>
+        <th>رقم المستند</th>
+        <th>الملف المرفق</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let expense of expenses">
+        <td>{{ expense.unitName }}</td>
+        <td>
+          <ul>
+            <li *ngFor="let item of expense.items">{{ item.itemName }} - الكمية: {{ item.quantity }}</li>
+          </ul>
+        </td>
+        <td>{{ expense.receiver }}</td>
+        <td>{{ expense.type === 'Transfer' ? 'تحويل' : expense.type === 'Regular' ? 'عادي' : 'مخصص' }}</td>
+        <td>{{ expense.documentNumber }}</td>
+        <td>
+          <a *ngIf="expense.attachment" [href]="expense.attachment" download="attachment" target="_blank">تحميل الملف</a>
+          <span *ngIf="!expense.attachment">لا يوجد</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

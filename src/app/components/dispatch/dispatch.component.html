@@ -1,4 +1,105 @@
 <div class="dispatch-container">
   <h2>Dispatch</h2>
   <!-- Dispatch content here -->
+  <div class="container py-4 px-2 px-md-5" style="max-width: 900px; font-family: 'Cairo', 'Arial', sans-serif;">
+    <h2 class="mb-4 text-center fw-bold">الصرف من المستودع</h2>
+    <form [formGroup]="dispatchForm" (ngSubmit)="onSubmit()" enctype="multipart/form-data" novalidate>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label">اسم الوحدة</label>
+          <select class="form-select" formControlName="unitName" required>
+            <option value="">اختر الوحدة</option>
+            <option *ngFor="let unit of units" [value]="unit.unitName">{{ unit.unitName }}</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">اسم المستلم</label>
+          <input type="text" class="form-control" formControlName="receiverName" placeholder="اسم المستلم" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">رقم الإيصال</label>
+          <input type="number" class="form-control" formControlName="receiptNumber" placeholder="رقم الإيصال" required min="1" step="1">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">رفع الإيصال (PDF/صورة)</label>
+          <input type="file" class="form-control" (change)="onFileChange($event)" accept=".pdf,image/*" required>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <div class="card-header bg-light fw-bold">تفاصيل الصنف</div>
+        <div class="card-body">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+              <label class="form-label">اسم الصنف</label>
+              <select class="form-select" formControlName="itemName" (change)="onItemNameChange()" required>
+                <option value="">اختر اسم الصنف</option>
+                <option *ngFor="let item of itemsList" [value]="item.itemName">{{ item.itemName }}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">رقم الصنف</label>
+              <input type="text" class="form-control" formControlName="stockNumber" readonly>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">الرقم التسلسلي (اختياري)</label>
+              <input type="text" class="form-control" formControlName="serialNumber" placeholder="الرقم التسلسلي">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">الكمية</label>
+              <input type="number" class="form-control" formControlName="quantity" min="1" required>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-12">
+              <div class="alert alert-warning p-2" *ngIf="warningMessage">{{ warningMessage }}</div>
+              <div class="alert alert-success p-2" *ngIf="successMessage">{{ successMessage }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary px-4 py-2 fw-bold" [disabled]="loading">صرف من المستودع</button>
+      </div>
+    </form>
+  </div>
+  <div class="container mt-5">
+    <h4 class="mb-3 text-center">سجل عمليات الصرف</h4>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped align-middle text-center">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>اسم الوحدة</th>
+            <th>اسم المستلم</th>
+            <th>رقم الإيصال</th>
+            <th>الصنف</th>
+            <th>رقم الصنف</th>
+            <th>الرقم التسلسلي</th>
+            <th>الكمية</th>
+            <th>الحالة</th>
+            <th>الإيصال</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of dispatches; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ d.unitName }}</td>
+            <td>{{ d.receiverName }}</td>
+            <td>{{ d.receiptNumber }}</td>
+            <td>{{ d.itemName }}</td>
+            <td>{{ d.stockNumber }}</td>
+            <td>{{ d.serialNumber }}</td>
+            <td>{{ d.quantity }}</td>
+            <td>
+              <span class="badge bg-success" *ngIf="d.status === 'completed'">مكتمل</span>
+              <span class="badge bg-secondary" *ngIf="d.status !== 'completed'">{{ d.status }}</span>
+            </td>
+            <td>
+              <a *ngIf="d.receipt" [href]="d.receipt" target="_blank" download>عرض</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>

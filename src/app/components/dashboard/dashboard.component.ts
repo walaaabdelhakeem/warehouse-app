@@ -25,7 +25,7 @@ export class DashboardComponent implements AfterViewInit, OnInit {
     { label: 'إسقاط العهد', link: 'disposal', icon: 'bi bi-x-octagon' },
     { label: 'التقارير', link: 'reports', icon: 'bi bi-bar-chart' },
     { label: 'بحث عن مستلم', link: 'user-search', icon: 'bi bi-search' },
-    { label: 'مدير النظام', link: 'admin', icon: 'bi bi-person-gear' }
+    { label: ' الاعدادات', link: 'admin', icon: 'bi bi-person-gear' }
   ];
 
   stats = [

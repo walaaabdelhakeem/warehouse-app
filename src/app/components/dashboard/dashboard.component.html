@@ -22,34 +22,40 @@
     <!-- Main Content -->
     <main class="col-12 col-md-9 col-lg-10">
       <ng-container *ngIf="!isChildRouteActive()">
-        <h2 class="mb-4 text-center">لوحة تحكم مدير المستودع</h2>
-        <div class="row g-4 mb-5">
-          <div class="col-12 col-md-6 col-lg-3" *ngFor="let stat of stats">
-            <div class="card text-center shadow-sm">
-              <div class="card-body">
-                <i [class]="stat.icon + ' display-4 mb-2'" [ngClass]="stat.color"></i>
-                <h5 class="card-title">{{ stat.label }}</h5>
-                <p class="card-text fs-4">{{ stat.value }}</p>
-              </div>
-            </div>
-          </div>
+        <div class="dashboard-image-area">
+          <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/warehousePanner.jpg" alt="Warehouse Planner" />
         </div>
-        <div class="row g-4 mb-5">
-          <div class="col-12 col-lg-6">
-            <div class="card shadow-sm p-3">
-              <h5 class="mb-3">نظرة عامة على الأصناف</h5>
-              <canvas id="itemsChart" height="180"></canvas>
-            </div>
-          </div>
-          <div class="col-12 col-lg-6">
-            <div class="card shadow-sm p-3">
-              <h5 class="mb-3">مصروفات الشهر حسب الوحدة</h5>
-              <canvas id="expensesChart" height="180"></canvas>
-            </div>
-          </div>
-        </div>        
       </ng-container>
       <router-outlet></router-outlet>
     </main>
   </div>
 </div>
+<style>
+  .dashboard-image-area {
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+    overflow: hidden;
+    z-index: 1;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    background: #f8f9fa;
+  }
+  .dashboard-image-area img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    border-radius: 1rem;
+    box-shadow: 0 0 24px rgba(0,0,0,0.08);
+  }
+  .row {
+    min-height: 100vh;
+  }
+  .sidebar {
+    min-height: 100vh;
+    height: 100%;
+  }
+</style>

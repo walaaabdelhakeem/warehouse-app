@@ -16,27 +16,38 @@
         <div *ngIf="submitted && orderForm.get('orderNumber')?.invalid" class="text-danger small mt-1">رقم التعاميد مطلوب</div>
       </div>
     </div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label class="form-label">إرفاق صورة أو PDF</label>
+        <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*,application/pdf">
+      </div>
+    </div>
     <h5 class="mt-4 mb-3">الأصناف في التعاميد</h5>
     <div formArrayName="items">
       <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="row g-3 align-items-end mb-2 border rounded p-3 bg-light">
         <div class="col-md-3">
           <label class="form-label">اسم الصنف</label>
-          <input type="text" class="form-control" formControlName="itemName" [ngClass]="{'is-invalid': submitted && item.get('itemName')?.invalid}">
+          <select class="form-select" formControlName="itemName" (change)="onItemNameChange(item)">
+            <option value="">اختر الصنف</option>
+            <option *ngFor="let dbItem of itemsList" [value]="dbItem.itemName">{{ dbItem.itemName }}</option>
+          </select>
           <div *ngIf="submitted && item.get('itemName')?.invalid" class="text-danger small mt-1">اسم الصنف مطلوب</div>
         </div>
         <div class="col-md-2">
           <label class="form-label">رقم الصنف</label>
-          <input type="text" class="form-control" formControlName="stockNumber" [ngClass]="{'is-invalid': submitted && item.get('stockNumber')?.invalid}">
+          <input type="text" class="form-control" formControlName="stockNumber" [readonly]="true">
           <div *ngIf="submitted && item.get('stockNumber')?.invalid" class="text-danger small mt-1">رقم الصنف مطلوب</div>
         </div>
         <div class="col-md-2">
           <label class="form-label">الكمية</label>
-          <input type="number" min="1" class="form-control" formControlName="quantity" [ngClass]="{'is-invalid': submitted && item.get('quantity')?.invalid}">
+          <input type="number" min="1" class="form-control" formControlName="quantity" (input)="onQuantityChange(item)">
           <div *ngIf="submitted && item.get('quantity')?.invalid" class="text-danger small mt-1">الكمية مطلوبة ويجب أن تكون رقمًا موجبًا</div>
         </div>
         <div class="col-md-3">
-          <label class="form-label">الأرقام التسلسلية (اختياري)</label>
-          <input type="text" class="form-control" formControlName="serialNumbers" placeholder="مثال: 123, 456, ...">
+          <label class="form-label">الأرقام التسلسلية</label>
+          <div *ngFor="let serialCtrl of getSerialNumbers(item).controls; let si = index">
+            <input type="text" class="form-control mb-1" [formControl]="serialCtrl" placeholder="رقم تسلسلي {{si+1}}">
+          </div>
         </div>
         <div class="col-md-2 d-flex align-items-end">
           <button type="button" class="btn btn-danger w-100" (click)="removeItem(i)" *ngIf="items.length > 1">
@@ -58,8 +69,8 @@
     <table class="table table-bordered table-striped text-center align-middle">
       <thead class="table-light">
         <tr>
-          <th>نوع التعاميد</th>
-          <th>رقمه</th>
+          <th>اسم التعاميد</th>
+          <th>رقم التعاميد</th>
           <th>عدد الأصناف</th>
           <th>تفاصيل الأصناف</th>
         </tr>
@@ -72,10 +83,21 @@
           <td>
             <ul class="list-unstyled mb-0">
               <li *ngFor="let item of order.items">
-                <span class="fw-bold">{{ item.itemName }}</span> ({{ item.stockNumber }}) - الكمية: {{ item.quantity }}
-                <span *ngIf="item.serialNumbers">- أرقام تسلسلية: {{ item.serialNumbers }}</span>
+                <span class="fw-bold">
+                  {{ item.itemName }}<ng-container *ngIf="item.stockNumber && item.stockNumber !== ''"> ({{ item.stockNumber }})</ng-container>
+                </span>
+                - الكمية: {{ item.quantity }}
+                <span *ngIf="item.serialNumbers && item.serialNumbers.length > 0">
+                  - أرقام تسلسلية:
+                  <span *ngFor="let serial of item.serialNumbers; let si = index">
+                    {{ serial }}<span *ngIf="si < item.serialNumbers.length - 1">, </span>
+                  </span>
+                </span>
               </li>
             </ul>
+            <div *ngIf="order.file && order.fileName">
+              <a [href]="order.file" target="_blank">عرض المرفق: {{ order.fileName }}</a>
+            </div>
           </td>
         </tr>
         <tr *ngIf="orders.length === 0">

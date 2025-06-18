@@ -14,19 +14,7 @@
                 اسم الوحدة مطلوب (2-50 حرف)
               </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">رقم الوحدة</label>
-              <input type="text" class="form-control" formControlName="unitNumber" [ngClass]="{'is-invalid': submitted && f['unitNumber'].invalid}">
-              <div *ngIf="submitted && f['unitNumber'].errors?.required" class="invalid-feedback">
-                رقم الوحدة مطلوب
-              </div>
-              <div *ngIf="submitted && f['unitNumber'].errors?.pattern" class="invalid-feedback">
-                يجب أن يكون رقم الوحدة أرقام فقط
-              </div>
-              <div *ngIf="submitted && f['unitNumber'].errors?.duplicate" class="invalid-feedback">
-                رقم الوحدة مستخدم بالفعل
-              </div>
-            </div>
+
             <button type="submit" class="btn btn-success w-100">حفظ الوحدة</button>
           </form>
         </div>

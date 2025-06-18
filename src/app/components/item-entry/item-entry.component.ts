@@ -37,7 +37,7 @@ export class ItemEntryComponent {
     this.http.get<Item[]>('http://localhost:3000/items').subscribe({
       next: (data) => {
         console.log('Items loaded:', data);
-        this.items = data;
+        this.items = data; // Show newest first
         this.drawItemsChart();
       },
       error: err => {

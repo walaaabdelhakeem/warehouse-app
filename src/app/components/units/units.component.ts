@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder,FormArray , FormGroup, Validators, AbstractControl, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule, NgFor } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
@@ -16,7 +16,7 @@ interface Unit {
   selector: 'app-units',
   standalone: true,
   schemas: [NO_ERRORS_SCHEMA],
-  imports: [HttpClientModule,CommonModule,NgFor,ReactiveFormsModule],
+  imports: [HttpClientModule, CommonModule, NgFor, ReactiveFormsModule],
   templateUrl: './units.component.html',
   styleUrls: ['./units.component.css']
 })
@@ -27,8 +27,8 @@ export class UnitsComponent {
 
   constructor(private fb: FormBuilder, private http: HttpClient) {
     this.unitForm = this.fb.group({
-      unitName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-      unitNumber: ['', [Validators.required, Validators.pattern('^[0-9]+$'), this.duplicateUnitNumberValidator.bind(this)]]
+      unitName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]]
+      // unitNumber removed
     });
     this.loadUnits();
   }
@@ -49,6 +49,12 @@ export class UnitsComponent {
   }
 
   saveUnit(unit: Unit) {
+    // Find the max unitNumber and increment
+    let maxUnitNumber = 0;
+    if (this.units.length > 0) {
+      maxUnitNumber = Math.max(...this.units.map(u => +u.unitNumber || 0));
+    }
+    unit.unitNumber = (maxUnitNumber + 1).toString();
     this.http.post<Unit>('http://localhost:3000/units', unit).subscribe({
       next: () => {
         this.loadUnits();
@@ -61,19 +67,17 @@ export class UnitsComponent {
   }
 
   duplicateUnitNumberValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) return null;
-    const exists = this.units.some(unit => unit['unitNumber'] === control.value);
-    return exists ? { duplicate: true } : null;
+    return null; // No longer needed
   }
 
   onSubmit() {
     this.submitted = true;
     if (this.unitForm.invalid) return;
-    const { unitName, unitNumber } = this.unitForm.value;
-    this.saveUnit({ unitName, unitNumber });
+    const { unitName } = this.unitForm.value;
+    // Pass empty string for unitNumber, will be set in saveUnit
+    this.saveUnit({ unitName, unitNumber: '' });
     this.unitForm.reset();
     this.submitted = false;
-    this.f['unitNumber'].updateValueAndValidity();
   }
 
   deleteUnit(index: number) {

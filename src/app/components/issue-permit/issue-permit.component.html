@@ -1,4 +1,128 @@
-<div class="issue-permit-container">
-  <h2>Issue Permit</h2>
-  <!-- Issue permit content here -->
+<div class="container my-4 p-4 border rounded bg-white" dir="rtl" style="max-width: 900px; font-family: 'Cairo', 'Arial', sans-serif;">
+  <!-- Header with logo and ministry info -->
+  <div class="row align-items-center mb-2">
+    <div class="col-2 text-center">
+      <!-- Logo placeholder -->
+      <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/Warehouse%20Manager%20Logo.png" alt="شعار" style="max-width: 80px; max-height: 80px;" />
+    </div>
+    <div class="col-8 text-center">
+      <div style="font-size: 1.2rem; font-weight: bold;">المملكة العربية السعودية</div>
+      <div style="font-size: 1.1rem;">وزارة الحرس الوطنى</div>
+      <div style="font-size: 1.1rem;">إدارة تقنية وأمن المعلومات للقطاع الشرقي</div>
+      <div style="font-size: 1.1rem; font-weight: bold; margin-top: 8px;">نموذج إذن صرف </div>
+      <div style="font-size: 1rem;">إدارة مستودع المعلومات قسم التموين</div>
+    </div>
+    <div class="col-2"></div>
+  </div>
+  <!-- Form info fields -->
+  <div class="row mb-2" style="font-size: 1rem;">
+    <div class="col-3">
+      الرقم:
+      <input type="text" class="form-control d-inline-block w-auto" [(ngModel)]="headerFields.number" name="headerNumber" style="width: 100px; display: inline-block; margin-right: 5px;" placeholder=".............">
+    </div>
+    <div class="col-3">
+      التاريخ:
+      <input type="date" class="form-control d-inline-block w-auto" [(ngModel)]="headerFields.date" name="headerDate" style="width: 140px; display: inline-block; margin-right: 5px;">
+    </div>
+    <div class="col-3">
+      الجهه الطالبه:
+      <input type="text" class="form-control d-inline-block w-auto" [(ngModel)]="headerFields.requester" name="headerRequester" style="width: 120px; display: inline-block; margin-right: 5px;" placeholder="..................">
+    </div>
+    <div class="col-3">الموضوع: <span class="border-bottom px-1">أمر صرف من المستودع</span></div>
+  </div>
+  <!-- Save all data button -->
+  <div class="row mb-2" style="font-size: 1rem;">
+    <div class="col-12 text-end mt-2">
+      <button type="button" class="btn btn-primary" (click)="saveHeaderFields()">حفظ جميع بيانات النموذج</button>
+    </div>
+  </div>
+  <!-- Main table -->
+  <form>
+    <table class="table table-bordered text-center align-middle" style="font-size: 1rem;">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 40px;">م</th>
+          <th>الصنف / المادة</th>
+          <th>الكمية</th>
+          <th>المتوفر</th>
+          <th>اعاده التخصيص</th>
+          <th>ملاحظات</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of rows; let i = index">
+          <td>{{ i + 1 }}</td>
+          <td>
+            <select class="form-select" [(ngModel)]="row.itemName" name="itemName{{i}}" (change)="onRowItemChange(row)">
+              <option value="">اختر الصنف</option>
+              <option *ngFor="let item of itemsList" [value]="item.itemName">{{ item.itemName }}</option>
+            </select>
+          </td>
+          <td>
+            <input type="number" class="form-control" [(ngModel)]="row.quantity" name="quantity{{i}}" min="1">
+          </td>
+          <td>
+            <input type="text" class="form-control" [value]="row.available" readonly>
+          </td>
+          <td>
+            <input type="text" class="form-control" [(ngModel)]="row.specialization" name="specialization{{i}}">
+          </td>
+          <td>
+            <input type="text" class="form-control" [(ngModel)]="row.notes" name="notes{{i}}">
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+  <!-- Arabic instructions -->
+  <div class="my-3" style="font-size: 1rem;">
+    <div>سعادة / مدير إدارة تقنية وأمن المعلومات للقطاع الشرقي   </div>
+    <div class="mb-2">سلمه الله</div>
+    <div>السلام عليكم ورحمة الله وبركاته،</div>
+    <div>أرفع لسعادتكم طلب الوارد بنظام إسناد والذي يتطلب صرف الأصناف الموضحة بالجدول أعلاه.</div>
+    <div>آمل بعد اطلاع سعادتكم التوجيه بما ترون حيال ذلك </div>
+    <div>والسلام عليكم</div>
+  </div>
+  <!-- Signature section -->
+<div class="row mb-4" style="font-size: 1rem;">
+  <div class="col-6"></div>
+  <div class="col-6 text-start">
+    <div>رئيس قسم التموين المكلف </div>
+    <div class="mt-4">...............................</div>
+    <div>...............................</div>
+  </div>
+</div>
+  <!-- Bottom instructions and signatures -->
+  <div class="border-top pt-3" style="font-size: 1rem;">
+    <div class="mb-2">إلى مأمور المستودع</div>
+    <!-- Ensure checkboxes are visible and not hidden by any CSS -->
+    <div class="mb-2" style="display: flex; align-items: center;">
+      <input type="checkbox" style="width: 20px; height: 20px; margin-left: 10px; accent-color: #0d6efd;" disabled>
+      <span style="font-size: 1rem;">يعتمد الصرف حسب الجدول الموضح أعلاه وتستكمل كافة الإجراءات اللازمة</span>
+    </div>
+    <div class="mb-2" style="display: flex; align-items: center;">
+      <input type="checkbox" style="width: 20px; height: 20px; margin-left: 10px; accent-color: #0d6efd;" disabled>
+      <span style="font-size: 1rem;">يتعذر الصرف</span>
+    </div>
+    <div class="row mt-4">
+      <div class="col-12 d-flex justify-content-end">
+        <div class="text-start">
+          <div>مدير إدارة تقنية وأمن المعلومات</div>
+          <div>بالقطاع الشرقي</div>
+          <div class="mt-4">...............................</div>
+          <div>...............................</div>
+        </div>
+      </div>
+      <div class="col-6"></div>
+    </div>
+  </div>
+  <style>
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #0d6efd;
+      vertical-align: middle;
+      margin-left: 8px;
+    }
+  </style>
 </div>

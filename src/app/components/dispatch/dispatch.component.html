@@ -1,5 +1,4 @@
 <div class="dispatch-container">
-  <h2>Dispatch</h2>
   <!-- Dispatch content here -->
   <div class="container py-4 px-2 px-md-5" style="max-width: 900px; font-family: 'Cairo', 'Arial', sans-serif;">
     <h2 class="mb-4 text-center fw-bold">الصرف من المستودع</h2>
@@ -7,14 +6,17 @@
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label class="form-label">اسم الوحدة</label>
-          <select class="form-select" formControlName="unitName" required>
+          <select class="form-select" formControlName="unitName" (change)="onUnitNameChange($event)" required>
             <option value="">اختر الوحدة</option>
             <option *ngFor="let unit of units" [value]="unit.unitName">{{ unit.unitName }}</option>
           </select>
         </div>
         <div class="col-md-6">
           <label class="form-label">اسم المستلم</label>
-          <input type="text" class="form-control" formControlName="receiverName" placeholder="اسم المستلم" required>
+          <select class="form-select" formControlName="receiverName" required>
+            <option value="">اختر اسم المستلم</option>
+            <option *ngFor="let recipient of recipients" [value]="recipient">{{ recipient }}</option>
+          </select>
         </div>
         <div class="col-md-6">
           <label class="form-label">رقم الإيصال</label>
@@ -41,7 +43,7 @@
               <input type="text" class="form-control" formControlName="stockNumber" readonly>
             </div>
             <div class="col-md-3">
-              <label class="form-label">الرقم التسلسلي (اختياري)</label>
+              <label class="form-label">الرقم التسلسلي (اجباري)</label>
               <input type="text" class="form-control" formControlName="serialNumber" placeholder="الرقم التسلسلي">
             </div>
             <div class="col-md-3">

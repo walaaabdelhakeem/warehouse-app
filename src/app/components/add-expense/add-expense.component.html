@@ -4,7 +4,7 @@
     <div class="row">
       <div class="col-md-6 mb-3">
         <label for="unitName" class="form-label">اسم الوحدة</label>
-        <select id="unitName" class="form-select" formControlName="unitName" required>
+        <select id="unitName" class="form-select" formControlName="unitName" (change)="onUnitChange()" required>
           <option value="">اختر الوحدة</option>
           <option *ngFor="let unit of availableUnits" [value]="unit.unitName">{{ unit.unitName }}</option>
         </select>
@@ -12,7 +12,10 @@
 
       <div class="col-md-6 mb-3">
         <label for="receiver" class="form-label">المستلم</label>
-        <input type="text" id="receiver" class="form-control" formControlName="receiver" required>
+        <select id="receiver" class="form-select" formControlName="receiver" required>
+          <option value="">اختر المستلم</option>
+          <option *ngFor="let recipient of recipients" [value]="recipient">{{ recipient }}</option>
+        </select>
       </div>
     </div>
 
@@ -21,13 +24,13 @@
         <label for="type" class="form-label">النوع</label>
         <select id="type" class="form-select" formControlName="type" required>
           <option value="">اختر النوع</option>
-          <option value="Transfer">تحويل</option>
-          <option value="Regular">عادي</option>
-          <option value="Custom">مخصص</option>
+          <option value="مناقله">مناقله</option>
+          <option value="نموذج صرف">نموذج صرف</option>
+          <option value="اخرى">اخرى</option>
         </select>
       </div>
 
-      <div class="col-md-6 mb-3">
+      <div class="col-md-6 mb-3" *ngIf="addExpenseForm.get('type')?.value === 'نموذج صرف'">
         <label for="documentNumber" class="form-label">رقم المستند</label>
         <input type="text" id="documentNumber" class="form-control" formControlName="documentNumber" required>
       </div>
@@ -51,7 +54,7 @@
       <input type="file" id="attachment" class="form-control" (change)="handleFileInput($event)" required>
     </div>
 
-    <button type="submit" class="btn btn-primary w-100" [disabled]="!addExpenseForm.valid">إضافة المصروف</button>
+    <button type="submit" class="btn btn-primary w-100" [disabled]="addExpenseForm.invalid || (addExpenseForm.get('type')?.value === 'Regular' && !addExpenseForm.get('documentNumber')?.value)">إضافة المصروف</button>
   </form>
 
   <h3 class="mt-4 text-primary">المصروفات</h3>
@@ -75,7 +78,7 @@
           </ul>
         </td>
         <td>{{ expense.receiver }}</td>
-        <td>{{ expense.type === 'Transfer' ? 'تحويل' : expense.type === 'Regular' ? 'عادي' : 'مخصص' }}</td>
+        <td>{{ expense.type }}</td>
         <td>{{ expense.documentNumber }}</td>
         <td>
           <a *ngIf="expense.attachment" [href]="expense.attachment" download="attachment" target="_blank">تحميل الملف</a>

@@ -3,19 +3,19 @@
   <div class="row align-items-center mb-2">
     <div class="col-2 text-center">
       <!-- Logo placeholder -->
-      <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/Warehouse%20Manager%20Logo.png" alt="شعار" style="max-width: 80px; max-height: 80px;" />
+      <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/Warehouse%20Manager%20Logo.png" alt="شعار" style="max-width: 150px; max-height: 120px;" />
     </div>
     <div class="col-8 text-center">
       <div style="font-size: 1.2rem; font-weight: bold;">المملكة العربية السعودية</div>
-      <div style="font-size: 1.1rem;">وزارة الحرس الوطنى</div>
-      <div style="font-size: 1.1rem;">إدارة تقنية وأمن المعلومات للقطاع الشرقي</div>
-      <div style="font-size: 1.1rem; font-weight: bold; margin-top: 8px;">نموذج إذن صرف </div>
-      <div style="font-size: 1rem;">إدارة مستودع المعلومات قسم التموين</div>
+      <div style="font-size: 1.2rem; font-weight: bold;">وزارة الحرس الوطنى</div>
+      <div style="font-size: 1.2rem; font-weight: bold;">إدارة تقنية وأمن المعلومات للقطاع الشرقي</div>
+      <div style="font-size: 1.2rem; font-weight: bold;">قسم التموين</div>
+      <div style="font-size: 1.2rem; font-weight: bold;"> إذن صرف </div>
     </div>
     <div class="col-2"></div>
   </div>
   <!-- Form info fields -->
-  <div class="row mb-2" style="font-size: 1rem;">
+  <div class="row mb-1" style="font-size: 1rem; font-weight: bold;">
     <div class="col-3">
       الرقم:
       <input type="text" class="form-control d-inline-block w-auto" [(ngModel)]="headerFields.number" name="headerNumber" style="width: 100px; display: inline-block; margin-right: 5px;" placeholder=".............">
@@ -26,7 +26,14 @@
     </div>
     <div class="col-3">
       الجهه الطالبه:
-      <input type="text" class="form-control d-inline-block w-auto" [(ngModel)]="headerFields.requester" name="headerRequester" style="width: 120px; display: inline-block; margin-right: 5px;" placeholder="..................">
+      <div class="form-group">
+        <select id="requestingUnit" class="form-control" formControlName="requestingUnit" required>
+          <option *ngFor="let unit of units" [value]="unit.unitName">{{ unit.unitName }}</option>
+        </select>
+        <div *ngIf="permitForm.get('unitName')?.invalid && permitForm.get('unitName')?.touched" class="text-danger">
+          يرجى اختيار الجهه الطالبه.
+        </div>
+      </div>
     </div>
     <div class="col-3">الموضوع: <span class="border-bottom px-1">أمر صرف من المستودع</span></div>
   </div>
@@ -75,7 +82,7 @@
     </table>
   </form>
   <!-- Arabic instructions -->
-  <div class="my-3" style="font-size: 1rem;">
+  <div class="my-3" style="font-size: 1.2rem; font-weight: bold;">
     <div>سعادة / مدير إدارة تقنية وأمن المعلومات للقطاع الشرقي   </div>
     <div class="mb-2">سلمه الله</div>
     <div>السلام عليكم ورحمة الله وبركاته،</div>
@@ -84,37 +91,47 @@
     <div>والسلام عليكم</div>
   </div>
   <!-- Signature section -->
-<div class="row mb-4" style="font-size: 1rem;">
-  <div class="col-6"></div>
-  <div class="col-6 text-start">
-    <div>رئيس قسم التموين المكلف </div>
-    <div class="mt-4">...............................</div>
-    <div>...............................</div>
+<div class="row mb-4" style="font-size: 1.2rem; font-weight: bold;">
+  <div class="col-12 d-flex justify-content-end">
+    <div class="text-center me-4" style="width: 250px;">
+      <div>رئيس قسم التموين المكلف</div>
+      <div class="mt-4">...............................</div>
+      <div>...............................</div>
+    </div>
   </div>
 </div>
+
   <!-- Bottom instructions and signatures -->
-  <div class="border-top pt-3" style="font-size: 1rem;">
+  <div class="border-top pt-3" style="font-size: 1.2rem; font-weight: bold;">
     <div class="mb-2">إلى مأمور المستودع</div>
     <!-- Ensure checkboxes are visible and not hidden by any CSS -->
     <div class="mb-2" style="display: flex; align-items: center;">
       <input type="checkbox" style="width: 20px; height: 20px; margin-left: 10px; accent-color: #0d6efd;" disabled>
-      <span style="font-size: 1rem;">يعتمد الصرف حسب الجدول الموضح أعلاه وتستكمل كافة الإجراءات اللازمة</span>
+      <span style="font-size: 1.2rem; font-weight: bold;">يعتمد الصرف حسب الجدول الموضح أعلاه وتستكمل كافة الإجراءات اللازمة</span>
     </div>
     <div class="mb-2" style="display: flex; align-items: center;">
       <input type="checkbox" style="width: 20px; height: 20px; margin-left: 10px; accent-color: #0d6efd;" disabled>
-      <span style="font-size: 1rem;">يتعذر الصرف</span>
+      <span style="font-size: 1.2rem; font-weight: bold;">يتعذر الصرف</span>
     </div>
     <div class="row mt-4">
-      <div class="col-12 d-flex justify-content-end">
-        <div class="text-start">
-          <div>مدير إدارة تقنية وأمن المعلومات</div>
-          <div>بالقطاع الشرقي</div>
-          <div class="mt-4">...............................</div>
-          <div>...............................</div>
-        </div>
-      </div>
-      <div class="col-6"></div>
+  <div class="row mt-4">
+
+    <div class="row mb-4" style="font-size: 1.2rem; font-weight: bold; margin-right: 30px;">
+  <div class="col-12 d-flex justify-content-end">
+    <div class="text-center me-4" style="width: 250px;">
+      <div>مدير إدارة تقنية وأمن المعلومات</div>
+      <div>بالقطاع الشرقي</div>
+      <div class="mt-4">...............................</div>
+      <div>...............................</div>
     </div>
+  </div>
+</div>
+
+
+</div>
+
+</div>
+
   </div>
   <style>
     input[type="checkbox"] {

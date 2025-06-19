@@ -5,12 +5,6 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-
-
-
-
-
-
 @Component({
   selector: 'app-dispatch',
   standalone: true,
@@ -28,6 +22,7 @@ export class DispatchComponent implements OnInit {
   warningMessage = '';
   successMessage = '';
   selectedFile: File | null = null;
+  recipients: any[] = []; // Add recipients array
 
   constructor(private fb: FormBuilder, private http: HttpClient) {
     this.dispatchForm = this.fb.group({
@@ -36,7 +31,7 @@ export class DispatchComponent implements OnInit {
       receiptNumber: ['', Validators.required],
       stockNumber: [{ value: '', disabled: true }, Validators.required],
       itemName: ['', Validators.required],
-      serialNumber: [''],
+      serialNumber: ['', Validators.required], // Changed to required
       quantity: [1, [Validators.required, Validators.min(1)]]
     });
   }
@@ -80,6 +75,27 @@ export class DispatchComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;
+    }
+  }
+
+  onUnitNameChange(event: any) {
+    const selectedUnitName = event?.target?.value || ''; // Safely access event.target.value
+    console.log('DEBUG: Selected Unit Name:', selectedUnitName); // Debugging log
+    console.log('DEBUG: Units Array:', this.units); // Debugging log
+    const selectedUnit = this.units.find(unit => unit.unitName === selectedUnitName);
+    console.log('DEBUG: Selected Unit:', selectedUnit); // Debugging log
+    if (selectedUnit && Array.isArray(selectedUnit.recipients)) {
+      console.log('DEBUG: Recipients:', selectedUnit.recipients); // Debugging log
+      this.recipients = [...selectedUnit.recipients]; // Ensure recipients are correctly populated
+      this.dispatchForm.get('receiverName')?.enable(); // Enable receiverName dropdown
+      this.dispatchForm.get('receiverName')?.setValidators([Validators.required]);
+      this.dispatchForm.get('receiverName')?.updateValueAndValidity();
+    } else {
+      console.log('DEBUG: No valid recipients found for the selected unit.'); // Debugging log
+      this.recipients = []; // Clear recipients if no valid unit is selected
+      this.dispatchForm.get('receiverName')?.disable(); // Disable receiverName dropdown
+      this.dispatchForm.get('receiverName')?.clearValidators();
+      this.dispatchForm.get('receiverName')?.updateValueAndValidity();
     }
   }
 

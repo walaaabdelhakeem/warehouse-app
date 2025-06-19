@@ -1,4 +1,87 @@
-<div class="returns-container">
-  <h2>Returns</h2>
-  <!-- Returns content here -->
+<div class="container mt-5">
+  <h2 class="text-center mb-4">استلام الرجيع</h2>
+  
+  <form (ngSubmit)="onSubmit()" [formGroup]="returnsForm" novalidate>
+    
+    <div class="form-group">
+      <label for="unitName">اسم الوحدة</label>
+      <select id="unitName" class="form-control" formControlName="unitName" (change)="onUnitChange($event)" required>
+        <option value="">اختر اسم الوحدة</option>
+        <option *ngFor="let unit of availableUnits" [value]="unit.unitName">{{ unit.unitName }}</option>
+      </select>
+      <div *ngIf="returnsForm.get('unitName')?.invalid && returnsForm.get('unitName')?.touched" class="text-danger">
+        يرجى اختيار اسم الوحدة.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="receiverName">اسم المستلم</label>
+      <select id="receiverName" class="form-control" formControlName="receiverName" required>
+        <option value="">اختر اسم المستلم</option>
+        <option *ngFor="let recipient of recipients" [value]="recipient">{{ recipient }}</option>
+      </select>
+      <div *ngIf="returnsForm.get('receiverName')?.invalid && returnsForm.get('receiverName')?.touched" class="text-danger">
+        يرجى اختيار اسم المستلم.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="receipt">إرفاق إيصال (PDF أو صورة)</label>
+      <input type="file" id="receipt" class="form-control" (change)="onFileChange($event)" accept="application/pdf,image/*" />
+    </div>
+
+    <div class="form-group">
+      <label for="items">العناصر</label>
+      <select id="items" class="form-control" formControlName="items" required>
+        <option *ngFor="let item of availableItems" [value]="item">{{ item }}</option>
+      </select>
+      <div *ngIf="returnsForm.get('items')?.invalid && returnsForm.get('items')?.touched" class="text-danger">
+        يرجى اختيار عنصر.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="quantity">الكمية</label>
+      <input type="number" id="quantity" class="form-control" formControlName="quantity" placeholder="أدخل الكمية" required />
+      <div *ngIf="returnsForm.get('quantity')?.invalid && returnsForm.get('quantity')?.touched" class="text-danger">
+        يرجى إدخال الكمية.
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block mt-3" [disabled]="returnsForm.invalid">إرسال</button>
+  </form>
+
+  <!-- عرض وتحميل الملف بعد الرفع -->
+  <div *ngIf="uploadedFile" class="mt-4">
+    <p>تم رفع الملف بنجاح:</p>
+    <a [href]="uploadedFile" target="_blank" class="btn btn-outline-info mr-2">عرض الملف</a>
+    <a [href]="uploadedFile" download="uploaded-file" class="btn btn-outline-success">تحميل الملف</a>
+  </div>
+
+  <!-- عرض البيانات المسترجعة -->
+  <div class="mt-5">
+    <h3 class="text-center">عرض البيانات المسترجعة</h3>
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th>اسم الوحدة</th>
+          <th>اسم المستلم</th>
+          <th>العناصر</th>
+          <th>الكمية</th>
+          <th>الإيصال</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let return of returns">
+          <td>{{ return.unitName }}</td>
+          <td>{{ return.receiverName }}</td>
+          <td>{{ return.items }}</td>
+          <td>{{ return.quantity }}</td>
+          <td>
+            <a *ngIf="return.receipt" [href]="return.receipt" target="_blank">عرض الإيصال</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>

@@ -119,43 +119,22 @@ export class PurchaseOrdersComponent implements OnInit {
     });
   }
 
-  onSubmit() {
+  async onSubmit() {
     this.submitted = true;
-    console.log('Form submitted', this.orderForm.value, this.orderForm.valid);
     if (this.orderForm.invalid) {
-      console.log('Form invalid', this.orderForm.errors, this.orderForm.value);
       return;
     }
     const order = this.orderForm.value;
-    // If a file is selected, read it and add to order before POST
-    if (this.selectedFile) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        order.file = reader.result as string;
-        order.fileName = this.selectedFile?.name;
-        this.http.post('http://localhost:3000/orders', order).subscribe({
-          next: (res) => {
-            console.log('POST success', res);
-            this.loadOrders();
-            this.orderForm.reset();
-            this.orderForm.setControl('items', this.fb.array([this.createItemGroup()]));
-            this.selectedFile = null;
-            this.submitted = false;
-          },
-          error: err => {
-            alert('حدث خطأ أثناء حفظ التعاميد');
-            console.error('POST error', err);
-          }
-        });
-      };
-      reader.readAsDataURL(this.selectedFile);
-    } else {
+    // Save order as before
+    const saveOrder = () => {
       this.http.post('http://localhost:3000/orders', order).subscribe({
-        next: (res) => {
-          console.log('POST success', res);
+        next: async (res) => {
+          // After saving order, update openingBalances
+          await this.updateOpeningBalancesWithOrder(order);
           this.loadOrders();
           this.orderForm.reset();
           this.orderForm.setControl('items', this.fb.array([this.createItemGroup()]));
+          this.selectedFile = null;
           this.submitted = false;
         },
         error: err => {
@@ -163,6 +142,41 @@ export class PurchaseOrdersComponent implements OnInit {
           console.error('POST error', err);
         }
       });
+    };
+    if (this.selectedFile) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        order.file = reader.result as string;
+        order.fileName = this.selectedFile?.name;
+        saveOrder();
+      };
+      reader.readAsDataURL(this.selectedFile);
+    } else {
+      saveOrder();
+    }
+  }
+
+  async updateOpeningBalancesWithOrder(order: any) {
+    // For each item in the order, update the corresponding opening balance
+    const openingBalances = await this.http.get<any[]>('http://localhost:3000/openingBalances').toPromise();
+    for (const item of order.items) {
+      // Find by itemName (not just stockNumber)
+      const balance = (openingBalances || []).find(b => b.itemName === item.itemName);
+      if (balance) {
+        // Only add the new entered quantity to the current quantityAvailable
+        const updated = { ...balance, quantityAvailable: Number(balance.quantityAvailable || 0) + Number(item.quantity || 0) };
+        await this.http.put(`http://localhost:3000/openingBalances/${balance.id}`, updated).toPromise();
+      } else {
+        // If not found, create a new opening balance for this item
+        const newBalance = {
+          stockNumber: item.stockNumber || '',
+          itemName: item.itemName,
+          quantityAvailable: Number(item.quantity || 0),
+          serialNumbers: '',
+          linkedToOrder: true
+        };
+        await this.http.post('http://localhost:3000/openingBalances', newBalance).toPromise();
+      }
     }
   }
 

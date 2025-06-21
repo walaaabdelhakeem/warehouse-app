@@ -33,8 +33,14 @@ export class OpeningBalancesComponent implements OnInit {
   }
 
   loadBalances(): void {
-    this.http.get<any[]>(this.apiUrl).subscribe({
-      next: (data) => this.openingBalances = data,
+    this.http.get<any[]>('http://localhost:3000/openingBalances').subscribe({
+      next: (data) => {
+        this.openingBalances = data;
+        // Force Angular to detect changes if needed
+        if (typeof (window as any).ng !== 'undefined' && (window as any).ng.probe) {
+          this.appRef.tick();
+        }
+      },
       error: (err) => console.error('Error loading balances:', err)
     });
   }
@@ -56,7 +62,7 @@ export class OpeningBalancesComponent implements OnInit {
     }
   }
 
-  saveBalance(): void {
+  async saveBalance(): Promise<void> {
     if (this.balanceForm.invalid) {
       this.showValidation = true;
       return;
@@ -64,6 +70,25 @@ export class OpeningBalancesComponent implements OnInit {
     const newBalance = this.balanceForm.value;
     if (!this.validateUniqueStockNumber(newBalance.stockNumber)) {
       this.warningMessage = 'رقم المخزون مستخدم بالفعل. يجب أن يكون رقمًا فريدًا.';
+      setTimeout(() => this.warningMessage = '', 4000);
+      return;
+    }
+    try {
+      const [openingBalances, orders] = await Promise.all([
+        this.http.get<any[]>('http://localhost:3000/openingBalances').toPromise(),
+        this.http.get<any[]>('http://localhost:3000/orders').toPromise()
+      ]);
+      const sumOpening = (openingBalances || [])
+        .filter(b => b.itemName === newBalance.itemName)
+        .reduce((sum, b) => sum + (Number(b.quantityAvailable) || 0), 0);
+      const sumOrders = (orders || [])
+        .flatMap((order: any) => order.items || [])
+        .filter((item: any) => item.itemName === newBalance.itemName)
+        .reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+      // Only add the current input value (not double count)
+      newBalance.quantityAvailable = sumOpening + sumOrders + Number(newBalance.quantityAvailable || 0);
+    } catch (err) {
+      this.warningMessage = 'حدث خطأ أثناء حساب الكمية.';
       setTimeout(() => this.warningMessage = '', 4000);
       return;
     }

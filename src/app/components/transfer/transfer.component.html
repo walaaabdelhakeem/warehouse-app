@@ -1,4 +1,77 @@
-<div class="transfer-container">
-  <h2>Transfer</h2>
-  <!-- Transfer content here -->
+<div class="container py-4" dir="rtl">
+  <h2 class="mb-4 text-center">مناقلة العهد</h2>
+  <form (ngSubmit)="onSubmit()" #transferForm="ngForm" class="bg-white p-4 rounded shadow-sm">
+    <div class="row mb-3">
+      <div class="col-md-6 mb-3 mb-md-0">
+        <label for="fromUnit" class="form-label">الوحدة المنقولة منها</label>
+        <select id="fromUnit" class="form-select" [(ngModel)]="fromUnit" name="fromUnit" (change)="onUnitChange()" required>
+          <option *ngFor="let unit of units" [ngValue]="unit">{{unit.unitName}}</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="newReceiver" class="form-label">اسم المستلم الجديد</label>
+        <input id="newReceiver" class="form-control" [(ngModel)]="newReceiver" name="newReceiver" required placeholder="ادخل اسم المستلم الجديد">
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">العهد الحالية المخصصة</label>
+      <div *ngIf="assignedItems.length === 0" class="alert alert-info">لا توجد عهد مخصصة لهذه الوحدة.</div>
+      <div *ngIf="assignedItems.length > 0" class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">اختيار</th>
+              <th scope="col">اسم الصنف</th>
+              <th scope="col">المستلم الحالي</th>
+              <th scope="col">الكمية</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of assignedItems">
+              <td><input type="checkbox" [(ngModel)]="item.selected" name="selected_{{item.id}}"></td>
+              <td>{{item.itemName}}</td>
+              <td>{{item.receiver}}</td>
+              <td>{{item.quantity}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="file" class="form-label">إرفاق ملف (اختياري)</label>
+      <input type="file" id="file" class="form-control" (change)="onFileChange($event)">
+    </div>
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn btn-primary px-4" [disabled]="!transferForm.form.valid || !hasSelectedItems">مناقلة</button>
+    </div>
+  </form>
+  <div *ngIf="successMessage" class="alert alert-success mt-4">{{successMessage}}</div>
+
+  <!-- جدول عرض بيانات النموذج -->
+  <div class="mt-5">
+    <h4 class="mb-3">جميع بيانات المناقلة</h4>
+    <table class="table table-bordered table-striped text-center">
+      <thead>
+        <tr>
+          <th>الوحدة المنقولة منها</th>
+          <th>اسم المستلم الجديد</th>
+          <th>اسم الصنف</th>
+          <th>الكمية</th>
+          <th>ملف مرفق</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of allTransfers">
+          <td>{{ item.unitName }}</td>
+          <td>{{ item.receiverName || '-' }}</td>
+          <td>{{ item.itemName }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>
+            <a *ngIf="item.file" [href]="item.file" target="_blank">عرض</a>
+            <span *ngIf="!item.file">-</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>

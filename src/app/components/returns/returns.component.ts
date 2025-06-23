@@ -18,6 +18,8 @@ export class ReturnsComponent implements OnInit {
   uploadedFile: string | null = null;
   returns: any[] = [];
   recipients: any[] = []; // Add recipients array
+  expenses: any[] = [];
+  filteredExpenses: any[] = [];
 
   constructor(private fb: FormBuilder, private http: HttpClient) {}
 
@@ -32,21 +34,16 @@ export class ReturnsComponent implements OnInit {
 
     this.loadItemsAndUnits();
     this.loadReturns();
+    this.loadExpenses();
   }
 
+  // Remove items loading from units/items endpoints, only use expenses for items
   loadItemsAndUnits(): void {
     this.http.get<any[]>('http://localhost:3000/units').subscribe(data => {
-      this.availableUnits = data; // Store full unit objects
-      console.log('DEBUG: Loaded Units:', this.availableUnits); // Debugging log
+      // Do not set availableItems here
+      this.availableUnits = data;
     }, error => {
       console.error('Error loading units:', error);
-    });
-
-    this.http.get<any[]>('http://localhost:3000/items').subscribe(data => {
-      this.availableItems = data.map((item: { itemName: string }) => item.itemName);
-      console.log('DEBUG: Loaded Items:', this.availableItems); // Debugging log
-    }, error => {
-      console.error('Error loading items:', error);
     });
   }
 
@@ -58,6 +55,17 @@ export class ReturnsComponent implements OnInit {
     });
   }
 
+  loadExpenses(): void {
+    this.http.get<any[]>('http://localhost:3000/expenses').subscribe(data => {
+      this.expenses = data;
+      // Only show units that exist in expenses
+      const uniqueUnits = Array.from(new Set(data.map(e => e.unitName)));
+      this.availableUnits = uniqueUnits.map(unitName => ({ unitName }));
+    }, error => {
+      console.error('Error loading expenses:', error);
+    });
+  }
+
   onFileChange(event: any): void {
     const file = event.target.files[0];
     if (file) {
@@ -66,23 +74,92 @@ export class ReturnsComponent implements OnInit {
   }
 
   onUnitChange() {
-    const selectedUnitName = this.returnsForm.get('unitName')?.value?.trim(); // Trim whitespace
-    const selectedUnit = this.availableUnits.find(unit => unit.unitName?.trim() === selectedUnitName); // Compare unitName property
-    console.log('DEBUG: Selected Unit Name:', selectedUnitName); // Debugging log
-    console.log('DEBUG: Available Units:', this.availableUnits); // Debugging log
-    console.log('DEBUG: Selected Unit:', selectedUnit); // Debugging log
-    if (selectedUnit && selectedUnit.recipients) {
-      console.log('DEBUG: Recipients:', selectedUnit.recipients); // Debugging log
-      this.recipients = selectedUnit.recipients; // Ensure recipients are correctly populated
-      this.returnsForm.get('receiverName')?.enable(); // Enable receiverName dropdown
+    const selectedUnitName = (this.returnsForm.get('unitName')?.value || '').toString().trim();
+    console.log('DEBUG: onUnitChange selectedUnitName =', selectedUnitName);
+    // Only show units that exist in expenses (case-insensitive, trimmed)
+    const unitExpenses = this.expenses.filter(e =>
+      (e.unitName?.toString().trim().toLowerCase() || '') === selectedUnitName.toLowerCase()
+    );
+    console.log('DEBUG: onUnitChange unitExpenses =', unitExpenses);
+    // Collect all unique receivers from expenses, trimmed and case-insensitive
+    const expenseRecipients = Array.from(
+      new Set(
+        unitExpenses
+          .map(e => (e.receiver?.toString().trim() || ''))
+          .filter(r => r)
+          .map(r => r.toLowerCase())
+      )
+    ).map(lowerR => {
+      // Find the first matching receiver in original case
+      const orig = unitExpenses.find(e => (e.receiver?.toString().trim().toLowerCase() || '') === lowerR);
+      return orig ? orig.receiver.toString().trim() : lowerR;
+    });
+    console.log('DEBUG: onUnitChange expenseRecipients =', expenseRecipients);
+    if (expenseRecipients.length > 0) {
+      this.recipients = expenseRecipients;
+      this.returnsForm.get('receiverName')?.enable();
       this.returnsForm.get('receiverName')?.setValidators([Validators.required]);
       this.returnsForm.get('receiverName')?.updateValueAndValidity();
     } else {
-      console.log('DEBUG: No valid recipients found for the selected unit.'); // Debugging log
-      this.recipients = []; // Clear recipients if no valid unit is selected
-      this.returnsForm.get('receiverName')?.disable(); // Disable receiverName dropdown
+      this.recipients = [];
+      this.returnsForm.get('receiverName')?.disable();
       this.returnsForm.get('receiverName')?.clearValidators();
       this.returnsForm.get('receiverName')?.updateValueAndValidity();
+    }
+    // Clear items and quantity until receiver is selected
+    this.availableItems = [];
+    this.returnsForm.patchValue({ items: '', quantity: '' });
+    console.log('DEBUG: onUnitChange availableItems cleared');
+  }
+
+  onReceiverChange() {
+    const selectedUnitNameRaw = this.returnsForm.get('unitName')?.value;
+    const selectedReceiverRaw = this.returnsForm.get('receiverName')?.value;
+    // Show a message in the console when a receiver is chosen
+    console.log('=== Receiver selection changed ===');
+    console.log('You chose receiver:', selectedReceiverRaw, 'for unit:', selectedUnitNameRaw);
+    const selectedUnitName = (selectedUnitNameRaw || '').toString().trim().toLowerCase();
+    const selectedReceiver = (selectedReceiverRaw || '').toString().trim().toLowerCase();
+    this.availableItems = [];
+    if (!selectedUnitName || !selectedReceiver) {
+      console.log('DEBUG: No unit or receiver selected');
+      this.returnsForm.patchValue({ items: '', quantity: '' });
+      return;
+    }
+    // Find all expenses for this unit and receiver (case-insensitive, trimmed)
+    const expenses = this.expenses.filter(e => {
+      const eUnit = (e.unitName?.toString().trim().toLowerCase() || '');
+      const eReceiver = (e.receiver?.toString().trim().toLowerCase() || '');
+      return eUnit === selectedUnitName && eReceiver === selectedReceiver;
+    });
+    const allItems = expenses.flatMap(e => Array.isArray(e.items) ? e.items : []);
+    this.availableItems = allItems.map((i: any) => ({ itemName: i.itemName, quantity: i.quantity }));
+    // Show the items in the console
+    console.log('Available items for this receiver:', this.availableItems);
+    if (this.availableItems.length === 1) {
+      this.returnsForm.patchValue({
+        items: this.availableItems[0].itemName,
+        quantity: this.availableItems[0].quantity
+      });
+      console.log('DEBUG: Auto-selected item:', this.availableItems[0]);
+    } else {
+      this.returnsForm.patchValue({ items: '', quantity: '' });
+      console.log('DEBUG: Multiple or no items, cleared selection');
+    }
+  }
+
+  onItemChange() {
+    // When an item is selected, set its quantity automatically
+    const selectedItemName = (this.returnsForm.get('items')?.value || '').toString().trim().toLowerCase();
+    console.log('DEBUG: onItemChange selectedItemName =', selectedItemName);
+    const selectedItem = this.availableItems.find((i: any) => (i.itemName || '').toString().trim().toLowerCase() === selectedItemName);
+    console.log('DEBUG: onItemChange selectedItem =', selectedItem);
+    if (selectedItem) {
+      this.returnsForm.patchValue({ quantity: selectedItem.quantity });
+      console.log('DEBUG: onItemChange quantity set to', selectedItem.quantity);
+    } else {
+      this.returnsForm.patchValue({ quantity: '' });
+      console.log('DEBUG: onItemChange quantity cleared');
     }
   }
 

@@ -1,4 +1,86 @@
-<div class="reports-container">
-  <h2>Reports</h2>
-  <!-- Reports content here -->
+<div class="container-fluid py-4">
+  <div class="row mb-3">
+    <div class="col-12 col-md-3 mb-2">
+      <select class="form-select" [(ngModel)]="selectedReport" (change)="onReportChange()">
+        <option *ngFor="let type of reportTypes" [value]="type.key">{{ type.label }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Input to trigger expense type report -->
+  <div class="mb-4" *ngIf="showExpenseTypeButtons">
+    <input type="text" class="form-control" placeholder="Expenses by Order" (focus)="onExpenseTypeInputClick()" readonly>
+    <div *ngIf="showExpenseTypeOptions" class="mt-2">
+      <button class="btn btn-outline-primary me-2" (click)="selectExpenseType('Support')">تقرير المصروفات حسب أوامر الشراء</button>
+      <button class="btn btn-outline-primary me-2" (click)="selectExpenseType('Order')">تقرير المصروفات حسب التعاميد</button>
+      <button class="btn btn-outline-primary" (click)="selectExpenseType('Other')">تقرير المصروفات حسب الدعم</button>
+    </div>
+  </div>
+
+  <!-- Expense type report table -->
+  <div *ngIf="reportExpenseType && reportExpenseData.length > 0" class="mb-4">
+    <h5 class="mb-3">
+    <h5 class="mb-3">
+  <span *ngIf="reportExpenseType==='Support'">تقرير المصروفات حسب أوامر الشراء</span>
+  <span *ngIf="reportExpenseType==='Order'">تقرير المصروفات حسب التعاميد</span>
+  <span *ngIf="reportExpenseType==='Other'">تقرير المصروفات حسب الدعم</span>
+</h5>
+
+    </h5>
+    
+
+    <button class="btn btn-success" (click)="exportExpenseTypeReportToPDF()">استخراج PDF</button>
+  </div>
+
+  <div class="table-responsive bg-white rounded shadow-sm p-3" id="report-table">
+    <button class="btn btn-success mb-3" (click)="exportToPDF()">
+      <i class="bi bi-file-earmark-pdf"></i> استخراج PDF
+    </button>
+    <!-- Table for expense type report (only for مصروفات حسب الأمر and when a type is selected) -->
+    <table *ngIf="selectedReport === 'expensesByOrder' && reportExpenseType && reportExpenseData.length > 0" class="table table-bordered table-striped text-center mb-4">
+      <thead>
+        <tr>
+          <th>نوع الأمر</th>
+          <th>رقم الأمر</th>
+          <th>العنصر</th>
+          <th>الكمية</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of reportExpenseData">
+          <td>
+            <span *ngIf="e.orderType === 'Support'">أمر شراء</span>
+            <span *ngIf="e.orderType === 'Order'">تعميد</span>
+            <span *ngIf="e.orderType === 'Other'">دعم</span>
+          </td>
+          <td>{{ e.orderNumber }}</td>
+          <td>{{ e.itemName }}</td>
+          <td>{{ e.quantity }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <!-- Dynamic Table for all other reports -->
+    <table *ngIf="filteredData.length > 0" class="table table-bordered table-striped text-center">
+      <thead>
+        <tr>
+          <th *ngFor="let col of getCurrentColumns()">{{ col.label }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of filteredData">
+          <td *ngFor="let col of getCurrentColumns()">
+            <ng-container *ngIf="col.key === 'linkedToOrder' || col.key === 'disposed'; else normalCell">
+              {{ row[col.key] === true ? 'نعم' : (row[col.key] === false ? 'لا' : (row[col.key] || '-')) }}
+            </ng-container>
+            <ng-template #normalCell>
+              {{ row[col.key] || '-' }}
+            </ng-template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="filteredData.length === 0" class="text-center text-muted py-4">
+      لا توجد بيانات مطابقة للفلتر الحالي.
+    </div>
+  </div>
 </div>

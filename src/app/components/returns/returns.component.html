@@ -16,7 +16,7 @@
 
     <div class="form-group">
       <label for="receiverName">اسم المستلم</label>
-      <select id="receiverName" class="form-control" formControlName="receiverName" required>
+      <select id="receiverName" class="form-control" formControlName="receiverName" (change)="onReceiverChange()" required>
         <option value="">اختر اسم المستلم</option>
         <option *ngFor="let recipient of recipients" [value]="recipient">{{ recipient }}</option>
       </select>
@@ -31,20 +31,18 @@
     </div>
 
     <div class="form-group">
-      <label for="items">العناصر</label>
-      <select id="items" class="form-control" formControlName="items" required>
-        <option *ngFor="let item of availableItems" [value]="item">{{ item }}</option>
-      </select>
-      <div *ngIf="returnsForm.get('items')?.invalid && returnsForm.get('items')?.touched" class="text-danger">
-        يرجى اختيار عنصر.
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label for="quantity">الكمية</label>
-      <input type="number" id="quantity" class="form-control" formControlName="quantity" placeholder="أدخل الكمية" required />
-      <div *ngIf="returnsForm.get('quantity')?.invalid && returnsForm.get('quantity')?.touched" class="text-danger">
-        يرجى إدخال الكمية.
+      <div class="row">
+        <div class="col-md-6">
+          <label for="items" class="form-label">العناصر</label>
+          <select id="items" class="form-select" formControlName="items" (change)="onItemChange()" required>
+            <option value="" disabled>اختر العنصر</option>
+            <option *ngFor="let item of availableItems" [value]="item.itemName">{{ item.itemName }} ({{ item.quantity }})</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="quantity" class="form-label">الكمية</label>
+          <input id="quantity" type="number" min="1" class="form-control" formControlName="quantity" [readonly]="true">
+        </div>
       </div>
     </div>
 

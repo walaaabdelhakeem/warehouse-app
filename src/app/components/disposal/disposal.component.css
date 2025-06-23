@@ -1,3 +1,31 @@
 .disposal-container {
   padding: 2rem;
 }
+
+/* Modern, responsive Bootstrap-based design for disposal component */
+.container {
+  max-width: 800px;
+}
+form {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+h2 {
+  font-weight: 700;
+  color: #c0392b;
+}
+.table {
+  margin-bottom: 0;
+}
+@media (max-width: 576px) {
+  .container {
+    padding: 0 5px;
+  }
+  h2 {
+    font-size: 1.3rem;
+  }
+  .form-label, .btn {
+    font-size: 0.95rem;
+  }
+}

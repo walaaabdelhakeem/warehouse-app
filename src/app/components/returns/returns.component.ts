@@ -164,6 +164,7 @@ export class ReturnsComponent implements OnInit {
   }
 
   onSubmit(): void {
+    console.log('onSubmit called');
     const formData = this.returnsForm.value;
     const file: File = formData.receipt;
 

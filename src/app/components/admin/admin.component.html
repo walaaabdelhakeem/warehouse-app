@@ -1,4 +1,195 @@
-<div class="admin-container">
-  <h2>Admin</h2>
-  <!-- Admin content here -->
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>مدير النظام</h3>
+    <button class="btn btn-danger" (click)="resetAll()">إعادة تعيين جميع البيانات</button>
+  </div>
+
+  <!-- Users Table -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <span>المستخدمون</span>
+      <button class="btn btn-success btn-sm" (click)="startAddUser()">إضافة مستخدم</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>المعرف</th>
+            <th>اسم المستخدم</th>
+            <th>الدور</th>
+            <th *ngIf="editType === 'addUser'">كلمة المرور</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="editType === 'addUser'">
+            <td>جديد</td>
+            <td><input [(ngModel)]="editRow.username" class="form-control form-control-sm"></td>
+            <td>
+              <select [(ngModel)]="editRow.role" class="form-select form-select-sm">
+                <option value="Admin">مدير</option>
+                <option value="User">مستخدم</option>
+              </select>
+            </td>
+            <td><input [(ngModel)]="editRow.password" class="form-control form-control-sm" type="password"></td>
+            <td>
+              <button class="btn btn-sm btn-success me-1" (click)="saveAddUser()">حفظ</button>
+              <button class="btn btn-sm btn-secondary" (click)="cancelEdit()">إلغاء</button>
+            </td>
+          </tr>
+          <tr *ngFor="let user of users">
+            <ng-container *ngIf="editType !== 'users' || editRow.id !== user.id; else editUser">
+              <td>{{ user.id }}</td>
+              <td>{{ user.username === 'admin' ? 'admin' : (user.username === 'user' ? 'user' : user.username) }}</td>
+              <td>{{ user.role === 'Admin' ? 'Admin' : (user.role === 'User' ? 'User' : user.role) }}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="startEdit('users', user)">تعديل</button>
+                <button class="btn btn-sm btn-danger" (click)="deleteRecord('users', user.id)">حذف</button>
+              </td>
+            </ng-container>
+            <ng-template #editUser>
+              <td>{{ user.id }}</td>
+              <td><input [(ngModel)]="editRow.username" class="form-control form-control-sm"></td>
+              <td>
+                <select [(ngModel)]="editRow.role" class="form-select form-select-sm">
+                  <option value="Admin">مدير</option>
+                  <option value="User">مستخدم</option>
+                </select>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-success me-1" (click)="saveEdit('users', user.id)">حفظ</button>
+                <button class="btn btn-sm btn-secondary" (click)="cancelEdit()">إلغاء</button>
+              </td>
+            </ng-template>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Items Table -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">الأصناف</div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>المعرف</th>
+            <th>اسم الصنف</th>
+            <th>رقم المخزون</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <ng-container *ngIf="editType !== 'items' || editRow.id !== item.id; else editItem">
+              <td>{{ item.id }}</td>
+              <td>{{ item.itemName }}</td>
+              <td>{{ item.stockNumber }}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="startEdit('items', item)">تعديل</button>
+                <button class="btn btn-sm btn-danger" (click)="deleteRecord('items', item.id)">حذف</button>
+              </td>
+            </ng-container>
+            <ng-template #editItem>
+              <td>{{ item.id }}</td>
+              <td><input [(ngModel)]="editRow.itemName" class="form-control form-control-sm"></td>
+              <td><input [(ngModel)]="editRow.stockNumber" class="form-control form-control-sm"></td>
+              <td>
+                <button class="btn btn-sm btn-success me-1" (click)="saveEdit('items', item.id)">حفظ</button>
+                <button class="btn btn-sm btn-secondary" (click)="cancelEdit()">إلغاء</button>
+              </td>
+            </ng-template>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">الأوامر</div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>المعرف</th>
+            <th>نوع الأمر</th>
+            <th>رقم الأمر</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of orders">
+            <ng-container *ngIf="editType !== 'orders' || editRow.id !== order.id; else editOrder">
+              <td>{{ order.id }}</td>
+              <td>{{ order.orderType === 'Order' ? 'أمر شراء' : (order.orderType === 'Support' ? 'دعم' : (order.orderType === 'Other' ? 'تعميد' : order.orderType)) }}</td>
+              <td>{{ order.orderNumber }}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="startEdit('orders', order)">تعديل</button>
+                <button class="btn btn-sm btn-danger" (click)="deleteRecord('orders', order.id)">حذف</button>
+              </td>
+            </ng-container>
+            <ng-template #editOrder>
+              <td>{{ order.id }}</td>
+              <td>
+                <select [(ngModel)]="editRow.orderType" class="form-select form-select-sm">
+                  <option value="Order">أمر شراء</option>
+                  <option value="Support">دعم</option>
+                  <option value="Other">تعميد</option>
+                </select>
+              </td>
+              <td><input [(ngModel)]="editRow.orderNumber" class="form-control form-control-sm"></td>
+              <td>
+                <button class="btn btn-sm btn-success me-1" (click)="saveEdit('orders', order.id)">حفظ</button>
+                <button class="btn btn-sm btn-secondary" (click)="cancelEdit()">إلغاء</button>
+              </td>
+            </ng-template>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Expenses Table -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">المصروفات</div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>المعرف</th>
+            <th>الصنف</th>
+            <th>الوحدة</th>
+            <th>الكمية</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let expense of displayedExpenses">
+            <ng-container *ngIf="editType !== 'expenses' || editRow.id !== expense.id; else editExpense">
+              <td>{{ expense.id }}</td>
+              <td>{{ expense.itemName }}</td>
+              <td>{{ expense.unitName }}</td>
+              <td>{{ expense.quantity }}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="startEdit('expenses', expense)">تعديل</button>
+                <button class="btn btn-sm btn-danger" (click)="deleteRecord('expenses', expense.id)">حذف</button>
+              </td>
+            </ng-container>
+            <ng-template #editExpense>
+              <td>{{ editRow.id }}</td>
+              <td><input [(ngModel)]="editRow.itemName" class="form-control form-control-sm"></td>
+              <td><input [(ngModel)]="editRow.unitName" class="form-control form-control-sm"></td>
+              <td><input [(ngModel)]="editRow.quantity" class="form-control form-control-sm"></td>
+              <td>
+                <button class="btn btn-sm btn-success me-1" (click)="saveEdit('expenses', editRow.id)">حفظ</button>
+                <button class="btn btn-sm btn-secondary" (click)="cancelEdit()">إلغاء</button>
+              </td>
+            </ng-template>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>

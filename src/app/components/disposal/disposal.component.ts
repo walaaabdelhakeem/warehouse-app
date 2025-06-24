@@ -90,7 +90,7 @@ export class DisposalComponent implements OnInit {
   }
 
   onSubmit() {
-    if (!this.selectedUnit || !this.selectedReceiver || !this.selectedItem || !this.quantity || !this.reason) { return; }
+    if (!this.selectedUnit || !this.selectedReceiver || !this.selectedItem || !this.quantity || !this.fileToUpload) { return; }
     // Simulate disposal by PATCHing the return record (not dispatches)
     const updated = { ...this.selectedItem, quantity: this.selectedItem.quantity - this.quantity, disposed: true, disposeReason: this.reason };
     this.http.patch(`${this.apiUrl}/returns/${this.selectedItem.id}`, updated).subscribe(() => {

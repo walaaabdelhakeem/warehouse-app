@@ -1,3 +1,46 @@
 .admin-container {
   padding: 2rem;
 }
+
+/* Responsive admin page styles */
+.card {
+  border-radius: 0.75rem;
+}
+.card-header {
+  font-size: 1.1rem;
+}
+.table th, .table td {
+  vertical-align: middle;
+  text-align: center;
+}
+.table th {
+  white-space: nowrap;
+}
+@media (max-width: 992px) {
+  .table-responsive {
+    overflow-x: auto;
+  }
+  .table {
+    font-size: 0.97rem;
+  }
+}
+@media (max-width: 576px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  .card {
+    margin-bottom: 1rem;
+  }
+  .card-header, .card-body {
+    padding: 0.75rem;
+  }
+  .table {
+    font-size: 0.93rem;
+  }
+  .table th, .table td {
+    padding: 0.4rem 0.3rem;
+  }
+}
+.btn {
+  min-width: 70px;
+}

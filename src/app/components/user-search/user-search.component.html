@@ -1,4 +1,33 @@
-<div class="user-search-container">
-  <h2>User Search</h2>
-  <!-- User search content here -->
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">بحث عن مستلم</h5>
+        </div>
+        <div class="card-body">
+          <form class="mb-3">
+            <div class="input-group">
+              <input type="text" [(ngModel)]="searchTerm" name="searchTerm" class="form-control" placeholder="ادخل اسم المستلم (جزئي أو كامل)" aria-label="بحث عن مستلم" required (input)="onSearch()">
+              <button class="btn btn-primary" type="button" (click)="onSearch()">بحث</button>
+            </div>
+          </form>
+          <div *ngIf="results.length === 0 && searchTerm">
+            <div class="alert alert-warning">لا يوجد نتائج مطابقة.</div>
+          </div>
+          <div *ngIf="results.length > 0">
+            <div *ngFor="let result of results" class="mb-4">
+              <div class="card border-secondary">
+                <div class="card-header bg-light">
+                  <strong>المستلم:</strong> {{ result.recipient }}<br>
+                  <strong>الوحدة:</strong> {{ result.unitName }}<br>
+                  <strong>رقم الوحدة:</strong> {{ result.unitNumber }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

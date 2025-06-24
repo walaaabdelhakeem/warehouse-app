@@ -1,3 +1,29 @@
 .user-search-container {
   padding: 2rem;
 }
+
+/* Responsive tweaks for user search */
+.card {
+  border-radius: 0.75rem;
+}
+.card-header {
+  font-size: 1.1rem;
+}
+@media (max-width: 576px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  .card {
+    margin-bottom: 1rem;
+  }
+  .card-header, .card-body {
+    padding: 0.75rem;
+  }
+}
+.list-group-item {
+  font-size: 1rem;
+}
+.badge {
+  font-size: 0.95em;
+  padding: 0.5em 0.75em;
+}

@@ -1,5 +1,3 @@
-//import * as html2pdf from 'html2pdf.js';
-
 import { Component, OnInit } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -10,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-reports',
   standalone: true,
-   imports: [CommonModule, HttpClientModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, HttpClientModule, ReactiveFormsModule, FormsModule],
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.css']
 })
@@ -19,12 +17,10 @@ export class ReportsComponent implements OnInit {
     { key: 'expensesByOrder', label: 'مصروفات حسب الأمر' },
     { key: 'remainingStock', label: 'المخزون المتبقي' },
     { key: 'detailedOrderExpense', label: 'تقرير لمصروفات الوحده' },
-    { key: 'returnedItems', label: 'تقرير المرتجعات' },
-    { key: 'userAssignedAssets', label: 'تقرير الاسقاط' }
+    { key: 'returnedItems', label: 'تقرير الرجيع والاسقاط' }
   ];
   selectedReport = this.reportTypes[0].key;
 
-  // Filters
   filter = {
     dateFrom: '',
     dateTo: '',
@@ -32,23 +28,20 @@ export class ReportsComponent implements OnInit {
     unit: ''
   };
 
-  // Data arrays (simulate localStorage)
   expenses: any[] = [];
   orders: any[] = [];
   stock: any[] = [];
-  openingBalances: any[] = []; // Added
+  openingBalances: any[] = [];
   returns: any[] = [];
   users: any[] = [];
   assignments: any[] = [];
   items: any[] = [];
   units: any[] = [];
 
-  // Filtered data for display
   filteredData: any[] = [];
 
   reportExpenseType: string = '';
   reportExpenseData: any[] = [];
-
   showExpenseTypeOptions = false;
 
   orderTypes = [
@@ -65,33 +58,19 @@ export class ReportsComponent implements OnInit {
   }
 
   loadData() {
-    // Load from db.json using HttpClient
     this.http.get<any[]>('http://localhost:3000/expenses').subscribe(data => this.expenses = data);
     this.http.get<any[]>('http://localhost:3000/orders').subscribe(data => {
-      // Filter orders by allowed orderType values only
       const allowedTypes = this.orderTypes.map(o => o.value);
       this.orders = data.filter(order => allowedTypes.includes(order.orderType));
     });
-    this.http.get<any[]>('http://localhost:3000/returns').subscribe(data => {
-      this.returns = data;
-      console.log('Loaded returns:', data);
-      const disposedReturns = data.filter((r: any) => r.disposed === true);
-      console.log('Disposed returns:', disposedReturns);
-    });
+    this.http.get<any[]>('http://localhost:3000/returns').subscribe(data => this.returns = data);
     this.http.get<any[]>('http://localhost:3000/users').subscribe(data => this.users = data);
     this.http.get<any[]>('http://localhost:3000/assignments').subscribe(data => this.assignments = data);
     this.http.get<any[]>('http://localhost:3000/items').subscribe(data => this.items = data);
     this.http.get<any[]>('http://localhost:3000/units').subscribe(data => this.units = data);
-    // Load openingBalances
     this.http.get<any[]>('http://localhost:3000/openingBalances').subscribe({
-      next: data => {
-        this.openingBalances = data;
-        console.log('Loaded openingBalances:', data);
-      },
-      error: () => {
-        this.openingBalances = [];
-        console.log('Failed to load openingBalances');
-      }
+      next: data => this.openingBalances = data,
+      error: () => this.openingBalances = []
     });
   }
 
@@ -104,7 +83,6 @@ export class ReportsComponent implements OnInit {
   }
 
   applyFilters() {
-    // Filtering logic for each report type
     switch (this.selectedReport) {
       case 'expensesByOrder':
         this.filteredData = this.expenses.filter(e =>
@@ -112,17 +90,12 @@ export class ReportsComponent implements OnInit {
         );
         break;
       case 'remainingStock':
-        this.filteredData = this.openingBalances;
-        console.log('remainingStock selected, filteredData:', this.filteredData);
-        break;
       case 'openingBalances':
         this.filteredData = this.openingBalances.filter(ob =>
           this.filterByItem(ob.itemName)
         );
-        console.log('openingBalances selected, filteredData:', this.filteredData);
         break;
       case 'detailedOrderExpense':
-        // Flatten expenses: each item in an expense becomes a row
         this.filteredData = this.expenses.flatMap(expense =>
           (expense.items || []).map((item: any) => ({
             unitName: expense.unitName,
@@ -132,11 +105,6 @@ export class ReportsComponent implements OnInit {
             itemName: item.itemName,
             quantity: item.quantity
           }))
-        );
-        break;
-      case 'unitExpensesSummary':
-        this.filteredData = this.expenses.filter(e =>
-          this.filterByDate(e.date) && this.filterByUnit(e.unit)
         );
         break;
       case 'returnedItems':
@@ -149,38 +117,26 @@ export class ReportsComponent implements OnInit {
           disposeReason: r.disposeReason
         }));
         break;
-      case 'userAssignedAssets':
-        console.log('All returns for userAssignedAssets:', this.returns);
-        this.filteredData = this.returns
-          .filter((r: any) => r.disposed === true)
-          .map((r: any) => ({
-            unitName: r.unitName,
-            receiverName: r.receiverName,
-            items: r.items,
-            quantity: r.quantity,
-            disposed: r.disposed,
-            disposeReason: r.disposeReason
-          }));
-        console.log('Filtered userAssignedAssets (disposed only):', this.filteredData);
-        break;
       default:
         this.filteredData = [];
     }
   }
 
   filterByDate(date: string) {
-    if (!this.filter.dateFrom && !this.filter.dateTo) { return true; }
+    if (!this.filter.dateFrom && !this.filter.dateTo) return true;
     const d = new Date(date);
-    if (this.filter.dateFrom && d < new Date(this.filter.dateFrom)) { return false; }
-    if (this.filter.dateTo && d > new Date(this.filter.dateTo)) { return false; }
+    if (this.filter.dateFrom && d < new Date(this.filter.dateFrom)) return false;
+    if (this.filter.dateTo && d > new Date(this.filter.dateTo)) return false;
     return true;
   }
+
   filterByItem(item: string) {
-    if (!this.filter.item) { return true; }
+    if (!this.filter.item) return true;
     return item === this.filter.item;
   }
+
   filterByUnit(unit: string) {
-    if (!this.filter.unit) { return true; }
+    if (!this.filter.unit) return true;
     return unit === this.filter.unit;
   }
 
@@ -189,58 +145,171 @@ export class ReportsComponent implements OnInit {
   }
 
   selectExpenseType(type: string) {
-    // Map report label/value to the correct orderType for filtering
-    let filterOrderType = '';
-    if (type === 'Support') {
-      filterOrderType = 'Support';
-    } else if (type === 'Order') {
-      filterOrderType = 'Order';
-    } else if (type === 'Other') {
-      filterOrderType = 'Other';
-    }
     this.reportExpenseType = type;
     this.showExpenseTypeOptions = false;
     this.http.get<any[]>('http://localhost:3000/orders').subscribe(orders => {
-      console.log('Fetched orders:', orders);
-      // Flatten orders: each item in an order becomes a row, only show fields from db.json
-      const filtered = orders
-        .filter((o: any) => {
-          const orderTypeVal = o.orderType ? o.orderType.toString().trim() : '';
-          return orderTypeVal === filterOrderType;
-        });
-      console.log('Filtered orders:', filtered);
-      this.reportExpenseData = filtered
-        .flatMap((order: any) =>
-          (order.items || []).map((item: any) => ({
-            orderNumber: order.orderNumber || '',
-            itemName: item.itemName || '',
-            quantity: item.quantity || '',
-            orderType: order.orderType || ''
-          }))
-        );
-      console.log('Report data for table:', this.reportExpenseData);
+      const filtered = orders.filter(o => (o.orderType || '').toString().trim() === type);
+      this.reportExpenseData = filtered.flatMap(order =>
+        (order.items || []).map((item: any) => ({
+          orderNumber: order.orderNumber || '',
+          itemName: item.itemName || '',
+          quantity: item.quantity || '',
+          orderType: order.orderType || ''
+        }))
+      );
     });
   }
 
-  exportExpenseTypeReportToPDF() {
-    const element = document.getElementById('expense-type-report-table');
-    if (!element) { return; }
-    window.print(); // Replace with html2pdf if needed
-  }
+exportExpenseTypeReportToPDF() {
+  const now = new Date();
+  const dateTime = now.toLocaleString('ar-EG');
 
-  exportToPDF() {
-    // Try to export the main report table as PDF
-    const element = document.querySelector('.table-responsive');
-    if (!element) { return; }
-    window.print(); // For real PDF export, replace with html2pdf or similar
-  }
+  const title =
+    this.reportExpenseType === 'Support' ? 'تقرير المصروفات حسب أوامر الشراء' :
+    this.reportExpenseType === 'Order' ? 'تقرير المصروفات حسب التعاميد' :
+    this.reportExpenseType === 'Other' ? 'تقرير المصروفات حسب الدعم' : 'تقرير المصروفات';
 
-  // Show expense type options only for 'expensesByOrder'
+  const printable = document.createElement('div');
+  printable.style.direction = 'rtl';
+  printable.style.fontFamily = 'Arial';
+  printable.style.padding = '20px';
+  printable.style.fontSize = '12px';
+
+  // رأس الصفحة
+  const headerHTML = `
+    <div style="text-align:center; margin-bottom:16px;">
+      <h2 style="margin:0;">${title}</h2>
+      <div style="font-size:13px;">${dateTime}</div>
+    </div>
+  `;
+
+  // بناء الجدول من البيانات
+  const tableRows = this.reportExpenseData.map(e => `
+    <tr>
+      <td>${e.orderType === 'Support' ? 'أمر شراء' : e.orderType === 'Order' ? 'تعميد' : 'دعم'}</td>
+      <td>${e.orderNumber || ''}</td>
+      <td>${e.itemName || ''}</td>
+      <td>${e.quantity || ''}</td>
+    </tr>
+  `).join('');
+
+  const tableHTML = `
+    <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse; text-align:center;">
+      <thead style="background:#f1f1f1;">
+        <tr>
+          <th>نوع الأمر</th>
+          <th>رقم الأمر</th>
+          <th>العنصر</th>
+          <th>الكمية</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+    </table>
+  `;
+
+  // تركيب المحتوى النهائي
+  printable.innerHTML = headerHTML + tableHTML;
+
+  // إعداد التصدير
+  const html2pdf = (window as any).html2pdf;
+  if (html2pdf) {
+    html2pdf()
+      .from(printable)
+      .set({
+        margin: [10, 10, 10, 10],
+        filename: `${title}.pdf`,
+        html2canvas: {
+          scale: 2
+        },
+        jsPDF: {
+          orientation: 'landscape',
+          unit: 'mm',
+          format: 'a4',
+        }
+      })
+      .save();
+  } else {
+    alert("html2pdf غير متوفر");
+  }
+}
+
+
+
+async exportToPDF() {
+  const element = document.createElement('div');
+  element.style.direction = 'rtl';
+  element.style.fontFamily = 'Arial';
+  element.style.padding = '20px';
+  element.style.fontSize = '12px';
+
+  const now = new Date();
+  const dateTime = now.toLocaleString('ar-EG');
+  const title = this.reportTypes.find(r => r.key === this.selectedReport)?.label || '';
+
+  const headerHTML = `
+    <div style="text-align:center; margin-bottom:16px;">
+      <h2 style="margin:0;">${title}</h2>
+      <div style="font-size:13px;">${dateTime}</div>
+    </div>
+  `;
+
+  const originalTable = document.querySelector('.table-responsive table')?.cloneNode(true) as HTMLElement;
+
+  if (originalTable) {
+    // تنسيقات الجدول العامة
+    originalTable.style.width = '100%';
+    originalTable.style.borderCollapse = 'collapse';
+    originalTable.style.border = '2px solid #000';
+
+    // تنسيق رؤوس الأعمدة
+    const ths = originalTable.querySelectorAll('th');
+    ths.forEach(th => {
+      th.style.border = '1px solid #000';
+      th.style.padding = '6px';
+      th.style.backgroundColor = '#f1f1f1';
+    });
+
+    // تنسيق خلايا البيانات
+    const tds = originalTable.querySelectorAll('td');
+    tds.forEach(td => {
+      td.style.border = '1px solid #000';
+      td.style.padding = '6px';
+    });
+
+    // تجميع الصفحة
+    element.innerHTML = headerHTML;
+    element.appendChild(originalTable);
+
+    // تحميل html2pdf بشكل ديناميكي
+    const html2pdf = (await import('html2pdf.js')).default;
+
+    html2pdf()
+      .from(element)
+      .set({
+        margin: [10, 10, 10, 10],
+        filename: `${title}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: {
+          orientation: 'landscape',
+          unit: 'mm',
+          format: 'a4',
+        }
+      })
+      .save();
+  } else {
+    alert("لم يتم العثور على جدول للطباعة");
+  }
+}
+
+
+
+
   get showExpenseTypeButtons() {
     return this.selectedReport === 'expensesByOrder';
   }
 
-  // Dynamic columns for each report type
   reportColumns: any = {
     expensesByOrder: [
       { key: 'date', label: 'التاريخ' },
@@ -279,19 +348,10 @@ export class ReportsComponent implements OnInit {
       { key: 'quantity', label: 'الكمية' },
       { key: 'disposed', label: 'تم الاسقاط' },
       { key: 'disposeReason', label: 'سبب الاسقاط' }
-    ],
-    userAssignedAssets: [
-      { key: 'unitName', label: 'اسم الوحدة' },
-      { key: 'receiverName', label: 'اسم المستلم' },
-      { key: 'items', label: 'الصنف' },
-      { key: 'quantity', label: 'الكمية' },
-      { key: 'disposed', label: 'تم الاسقاط' },
-      { key: 'disposeReason', label: 'سبب الاسقاط' }
-    ],
-    // Add more mappings for other report types as needed
+    ]
   };
 
   getCurrentColumns = () => {
     return this.reportColumns[this.selectedReport] || [];
-  }
+  };
 }

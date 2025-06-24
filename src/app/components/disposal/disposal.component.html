@@ -1,39 +1,35 @@
 <div class="container py-4" dir="rtl">
   <h2 class="mb-4 text-center">إسقاط العهد</h2>
-  <form (ngSubmit)="onSubmit()" #disposalForm="ngForm" class="bg-white p-4 rounded shadow-sm">
-    <div class="row mb-3">
-      <div class="col-md-6 mb-3 mb-md-0">
-        <label for="unit" class="form-label">اسم الوحدة</label>
-        <select id="unit" class="form-select" [(ngModel)]="selectedUnit" name="unit" (change)="onUnitChange()" required>
-          <option *ngFor="let unit of units" [ngValue]="unit">{{unit.unitName}}</option>
-        </select>
-      </div>
-      <div class="col-md-6">
-        <label for="receiver" class="form-label">اسم المستلم</label>
-        <select id="receiver" class="form-select" [(ngModel)]="selectedReceiver" name="receiver" (change)="onReceiverChange()" required>
-          <option *ngFor="let r of receivers" [ngValue]="r">{{r}}</option>
-        </select>
-      </div>
+  <form (ngSubmit)="onSubmit()" #disposalForm="ngForm" enctype="multipart/form-data" class="row g-3">
+    <div class="col-md-6 mb-3">
+      <label for="unit" class="form-label">اسم الوحدة</label>
+      <select id="unit" class="form-select" [(ngModel)]="selectedUnit" name="unit" (change)="onUnitChange()" required>
+        <option *ngFor="let unit of units" [ngValue]="unit">{{unit.unitName}}</option>
+      </select>
     </div>
-    <div class="row mb-3">
-      <div class="col-md-6 mb-3 mb-md-0">
-        <label for="item" class="form-label">العهدة المراد إسقاطها</label>
-        <select id="item" class="form-select" [(ngModel)]="selectedItem" name="item" (change)="onItemChange()" required>
-          <option *ngFor="let item of items" [ngValue]="item">{{item.items}} ({{item.quantity}})</option>
-        </select>
-      </div>
-      <div class="col-md-6">
-        <label for="quantity" class="form-label">الكمية</label>
-        <input id="quantity" type="number" min="1" [max]="selectedItem?.quantity || 1" class="form-control" [(ngModel)]="quantity" name="quantity" required>
-      </div>
+    <div class="col-md-6 mb-3">
+      <label for="receiver" class="form-label">اسم المستلم</label>
+      <select id="receiver" class="form-select" [(ngModel)]="selectedReceiver" name="receiver" (change)="onReceiverChange()" required>
+        <option *ngFor="let r of receivers" [ngValue]="r">{{r}}</option>
+      </select>
     </div>
-    <div class="mb-3">
-      <label for="reason" class="form-label">السبب</label>
-      <textarea id="reason" class="form-control" [(ngModel)]="reason" name="reason" rows="2" required placeholder="اكتب سبب الإسقاط"></textarea>
+    <div class="col-md-6 mb-3">
+      <label for="item" class="form-label">العهدة المراد إسقاطها</label>
+      <select id="item" class="form-select" [(ngModel)]="selectedItem" name="item" (change)="onItemChange()" required>
+        <option *ngFor="let item of items" [ngValue]="item">{{item.items}} ({{item.quantity}})</option>
+      </select>
     </div>
-    <div class="mb-3">
-      <label for="file" class="form-label">إرفاق ملف (اختياري)</label>
-      <input type="file" id="file" class="form-control" (change)="onFileChange($event)">
+    <div class="col-md-6 mb-3">
+      <label for="quantity" class="form-label">الكمية</label>
+      <input id="quantity" type="number" min="1" [max]="selectedItem?.quantity || 1" class="form-control" [(ngModel)]="quantity" name="quantity" required>
+    </div>
+    <div class="col-md-6 mb-3">
+      <label for="fileInput" class="form-label">إرفاق ملف <span class="text-danger">*</span></label>
+      <input type="file" class="form-control" id="fileInput" (change)="onFileChange($event)" required accept=".pdf,image/jpeg,image/png,image/jpg">
+    </div>
+    <div class="col-md-6 mb-3">
+      <label for="reasonInput" class="form-label">السبب (اختياري)</label>
+      <input type="text" class="form-control" id="reasonInput" [(ngModel)]="reason" name="reason">
     </div>
     <div class="d-flex justify-content-end">
       <button type="submit" class="btn btn-danger px-4" [disabled]="!disposalForm.form.valid">إسقاط</button>
@@ -70,5 +66,5 @@
       </tbody>
     </table>
   </div>
+</div>
 
-  

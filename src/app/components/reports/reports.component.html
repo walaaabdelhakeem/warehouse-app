@@ -29,7 +29,6 @@
     </h5>
     
 
-    <button class="btn btn-success" (click)="exportExpenseTypeReportToPDF()">استخراج PDF</button>
   </div>
 
   <div class="table-responsive bg-white rounded shadow-sm p-3" id="report-table">
@@ -59,8 +58,8 @@
         </tr>
       </tbody>
     </table>
-    <!-- Dynamic Table for all other reports -->
-    <table *ngIf="filteredData.length > 0" class="table table-bordered table-striped text-center">
+    <!-- Dynamic Table for all other reports except مصروفات حسب الأمر -->
+    <table *ngIf="filteredData.length > 0 && selectedReport !== 'expensesByOrder'" class="table table-bordered table-striped text-center">
       <thead>
         <tr>
           <th *ngFor="let col of getCurrentColumns()">{{ col.label }}</th>
@@ -70,10 +69,20 @@
         <tr *ngFor="let row of filteredData">
           <td *ngFor="let col of getCurrentColumns()">
             <ng-container *ngIf="col.key === 'linkedToOrder' || col.key === 'disposed'; else normalCell">
-              {{ row[col.key] === true ? 'نعم' : (row[col.key] === false ? 'لا' : (row[col.key] || '-')) }}
+              {{ row[col.key] === true ? 'نعم' : (row[col.key] === false ? 'لا' : (row[col.key] || '-') ) }}
             </ng-container>
             <ng-template #normalCell>
-              {{ row[col.key] || '-' }}
+              <ng-container *ngIf="col.key === 'serialNumbers'; else defaultCell">
+                <ng-container *ngIf="row[col.key] && row[col.key].length > 0; else dashCell">
+                  <span *ngFor="let sn of row[col.key].split(',')">
+                    {{ sn.trim() }}<br>
+                  </span>
+                </ng-container>
+                <ng-template #dashCell>-</ng-template>
+              </ng-container>
+              <ng-template #defaultCell>
+                {{ row[col.key] || '-' }}
+              </ng-template>
             </ng-template>
           </td>
         </tr>

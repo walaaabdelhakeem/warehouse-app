@@ -66,7 +66,7 @@
           <th>اسم المستلم</th>
           <th>العناصر</th>
           <th>الكمية</th>
-          <th>الإيصال</th>
+          <th>السند</th>
         </tr>
       </thead>
       <tbody>
@@ -76,7 +76,7 @@
           <td>{{ return.items }}</td>
           <td>{{ return.quantity }}</td>
           <td>
-            <a *ngIf="return.receipt" [href]="return.receipt" target="_blank">عرض الإيصال</a>
+            <a *ngIf="return.receipt" [href]="return.receipt" target="_blank">عرض السند</a>
           </td>
         </tr>
       </tbody>

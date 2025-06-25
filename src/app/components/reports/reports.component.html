@@ -105,11 +105,16 @@
       <tbody>
         <tr *ngFor="let row of filteredData">
           <td *ngFor="let col of getCurrentColumns()">
-            <ng-container *ngIf="selectedReport === 'receiverAssets' && col.key === 'assets'; else defaultCell">
+            <ng-container *ngIf="selectedReport === 'receiverAssets' && col.key === 'assets'; else serialCell">
               {{ row[col.key] }}
             </ng-container>
-            <ng-template #defaultCell>
-              {{ row[col.key] || '-' }}
+            <ng-template #serialCell>
+              <ng-container *ngIf="selectedReport === 'remainingStock' && col.key === 'serialNumbers'; else defaultCell">
+                <span *ngFor="let sn of (row[col.key] ? row[col.key].split(',') : [])">{{ sn.trim() }}<br></span>
+              </ng-container>
+              <ng-template #defaultCell>
+                {{ row[col.key] || '-' }}
+              </ng-template>
             </ng-template>
           </td>
         </tr>

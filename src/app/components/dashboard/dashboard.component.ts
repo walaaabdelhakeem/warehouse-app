@@ -36,6 +36,7 @@ export class DashboardComponent implements AfterViewInit, OnInit {
   ];
 
   currentChild: string | null = null;
+  userRole: string = '';
 
   constructor(private router: Router, private route: ActivatedRoute, private http: HttpClient) {
     this.router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => {
@@ -49,6 +50,18 @@ export class DashboardComponent implements AfterViewInit, OnInit {
   }
 
   ngOnInit() {
+    // Get user role from localStorage (case-insensitive)
+    const userStr = localStorage.getItem('currentUser');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        this.userRole = (user.role || '').toLowerCase();
+      } catch {
+        this.userRole = '';
+      }
+    } else {
+      this.userRole = '';
+    }
     setInterval(() => this.loadDashboardData(), 2000);
   }
 
@@ -126,7 +139,20 @@ export class DashboardComponent implements AfterViewInit, OnInit {
     }, 0);
   }
 
+  get filteredFeatures() {
+    if (this.userRole === 'admin') {
+      return this.features;
+    } else {
+      return this.features.filter(f => f.label.trim() !== 'الاعدادات' && f.label.trim() !== ' الاعدادات');
+    }
+  }
+
   isChildRouteActive(): boolean {
     return !!this.currentChild;
+  }
+
+  logout() {
+    localStorage.clear();
+    this.router.navigate(['/login']);
   }
 }

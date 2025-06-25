@@ -1,22 +1,23 @@
 <div class="container-fluid py-5" dir="rtl">
   <div class="row">
     <!-- Sidebar -->
-    <nav class="col-12 col-md-3 col-lg-2 mb-4 mb-md-0">
+    <nav class="col-12 col-md-3 col-lg-2 mb-4 mb-md-0 pe-0">
       <div class="sidebar bg-white rounded shadow-sm p-3 h-100 sticky-top">
         <div class="text-center mb-4">
           <a [routerLink]="['/dashboard']">
-            <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/Warehouse%20Manager%20Logo.png" alt="شعار مدير المستودع" style="max-width: 100px; max-height: 100px;">
+            <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/Warehouse%20Manager%20Logo.png" alt="شعار مدير المستودع" style="max-width: 200px; max-height: 150px;">
           </a>
         </div>
         <h5 class="mb-4 text-center">القائمة الرئيسية</h5>
-        <ul class="nav flex-column gap-2">
-          <li class="nav-item" *ngFor="let feature of features">
-            <a [routerLink]="feature.link" routerLinkActive="active" class="nav-link d-flex align-items-center gap-2 fs-6 sidebar-link">
+        <ul class="nav flex-column gap-2 text-center">
+          <li class="nav-item" *ngFor="let feature of filteredFeatures">
+            <a [routerLink]="feature.link" routerLinkActive="active" class="nav-link d-flex flex-column align-items-center gap-2 fs-6 sidebar-link">
               <i [class]="feature.icon + ' fs-5'"></i>
-              <span>{{ feature.label }}</span>
+              <span class="whitespace-nowrap">{{ feature.label }}</span>
             </a>
           </li>
         </ul>
+        <button class="btn btn-danger w-100 mt-3" (click)="logout()">خروج</button>
       </div>
     </nav>
     <!-- Main Content -->
@@ -57,5 +58,16 @@
   .sidebar {
     min-height: 100vh;
     height: 100%;
+    padding-right: 0 !important;
+  }
+  .sidebar-link {
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  .sidebar-link .whitespace-nowrap {
+    white-space: nowrap;
+    text-align: center;
+    width: 100%;
+    display: inline-block;
   }
 </style>

@@ -17,7 +17,8 @@ export class ReportsComponent implements OnInit {
     { key: 'expensesByOrder', label: 'مصروفات حسب الأمر' },
     { key: 'remainingStock', label: 'المخزون المتبقي' },
     { key: 'detailedOrderExpense', label: 'تقرير لمصروفات الوحده' },
-    { key: 'returnedItems', label: 'تقرير الرجيع والاسقاط' }
+    { key: 'returnedItems', label: 'تقرير الرجيع والاسقاط' },
+    { key: 'receiverAssets', label: 'تقرير عن المستلم والعهده الخاصه به' }
   ];
   selectedReport = this.reportTypes[0].key;
 
@@ -37,6 +38,7 @@ export class ReportsComponent implements OnInit {
   assignments: any[] = [];
   items: any[] = [];
   units: any[] = [];
+  unitsWithData: any[] = [];
 
   filteredData: any[] = [];
 
@@ -50,38 +52,98 @@ export class ReportsComponent implements OnInit {
     { label: 'دعم ', value: 'Other' }
   ];
 
+  // --- Add for unit expenses report ---
+  showUnitExpensesTable = false;
+  unitExpensesReportData: any[] = [];
+
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
-    this.loadData();
+    this.loadDataWithDebug();
     this.applyFilters();
   }
 
-  loadData() {
-    this.http.get<any[]>('http://localhost:3000/expenses').subscribe(data => this.expenses = data);
+  loadDataWithDebug() {
+    this.http.get<any[]>('http://localhost:3000/expenses').subscribe(data => {
+      this.expenses = data;
+      this.updateUnitsWithData();
+      console.log('[DEBUG] expenses loaded:', this.expenses);
+    });
     this.http.get<any[]>('http://localhost:3000/orders').subscribe(data => {
       const allowedTypes = this.orderTypes.map(o => o.value);
       this.orders = data.filter(order => allowedTypes.includes(order.orderType));
+      console.log('[DEBUG] orders loaded:', this.orders);
     });
-    this.http.get<any[]>('http://localhost:3000/returns').subscribe(data => this.returns = data);
-    this.http.get<any[]>('http://localhost:3000/users').subscribe(data => this.users = data);
-    this.http.get<any[]>('http://localhost:3000/assignments').subscribe(data => this.assignments = data);
-    this.http.get<any[]>('http://localhost:3000/items').subscribe(data => this.items = data);
-    this.http.get<any[]>('http://localhost:3000/units').subscribe(data => this.units = data);
+    this.http.get<any[]>('http://localhost:3000/returns').subscribe(data => {
+      this.returns = data;
+      this.updateUnitsWithData();
+      console.log('[DEBUG] returns loaded:', this.returns);
+    });
+    this.http.get<any[]>('http://localhost:3000/users').subscribe(data => {
+      this.users = data;
+      console.log('[DEBUG] users loaded:', this.users);
+    });
+    this.http.get<any[]>('http://localhost:3000/assignments').subscribe(data => {
+      this.assignments = data;
+      console.log('[DEBUG] assignments loaded:', this.assignments);
+    });
+    this.http.get<any[]>('http://localhost:3000/items').subscribe(data => {
+      this.items = data;
+      console.log('[DEBUG] items loaded:', this.items);
+    });
+    this.http.get<any[]>('http://localhost:3000/units').subscribe(data => {
+      // Only keep units that exist in db.json (i.e., have data in expenses or returns)
+      this.units = data;
+      this.updateUnitsWithData();
+      console.log('[DEBUG] units loaded:', this.units);
+    });
     this.http.get<any[]>('http://localhost:3000/openingBalances').subscribe({
-      next: data => this.openingBalances = data,
-      error: () => this.openingBalances = []
+      next: data => {
+        this.openingBalances = data;
+        console.log('[DEBUG] openingBalances loaded:', this.openingBalances);
+      },
+      error: () => {
+        this.openingBalances = [];
+        console.log('[DEBUG] openingBalances failed to load');
+      }
     });
+  }
+
+  updateUnitsWithData() {
+    if (!this.units || (!this.expenses && !this.returns)) {
+      this.unitsWithData = [];
+      return;
+    }
+    // Only include units that have data in expenses or returns
+    const expenseUnits = (this.expenses || []).map(e => e.unitName).filter(Boolean);
+    const returnUnits = (this.returns || []).map(r => r.unitName).filter(Boolean);
+    const allUnitNames = Array.from(new Set([...expenseUnits, ...returnUnits]));
+    this.unitsWithData = this.units.filter(u => allUnitNames.includes(u.unitName));
   }
 
   onReportChange() {
     this.applyFilters();
+    if (this.selectedReport === 'detailedOrderExpense') {
+      setTimeout(() => {
+        console.log('--- تقرير مصروفات الوحده (on click) ---');
+        console.log('expenses:', this.expenses);
+        console.log('returns:', this.returns);
+        console.log('units:', this.units);
+        console.log('filter:', this.filter);
+        this.generateUnitExpensesReport();
+        console.log('unitExpensesReportData:', this.unitExpensesReportData);
+        this.showUnitExpensesTable = true;
+      }, 500);
+    } else {
+      this.showUnitExpensesTable = false;
+    }
   }
 
   onFilterChange() {
     this.applyFilters();
   }
 
+  // Only show summary and details tables for detailedOrderExpense, so filteredData should be set for this report only
   applyFilters() {
     switch (this.selectedReport) {
       case 'expensesByOrder':
@@ -96,16 +158,19 @@ export class ReportsComponent implements OnInit {
         );
         break;
       case 'detailedOrderExpense':
-        this.filteredData = this.expenses.flatMap(expense =>
-          (expense.items || []).map((item: any) => ({
-            unitName: expense.unitName,
-            receiver: expense.receiver,
-            type: expense.type,
-            documentNumber: expense.documentNumber,
-            itemName: item.itemName,
-            quantity: item.quantity
-          }))
-        );
+        // Filter details table by selected unit if any
+        this.filteredData = this.expenses
+          .filter(expense => !this.filter.unit || expense.unitName === this.filter.unit)
+          .flatMap(expense =>
+            (expense.items || []).map((item: any) => ({
+              unitName: expense.unitName,
+              receiver: expense.receiver,
+              type: expense.type,
+              documentNumber: expense.documentNumber,
+              itemName: item.itemName,
+              quantity: item.quantity
+            }))
+          );
         break;
       case 'returnedItems':
         this.filteredData = this.returns.map((r: any) => ({
@@ -115,6 +180,22 @@ export class ReportsComponent implements OnInit {
           quantity: r.quantity,
           disposed: r.disposed,
           disposeReason: r.disposeReason
+        }));
+        break;
+      case 'receiverAssets':
+        // Group by receiver, aggregate all items for each receiver
+        const receiverMap: { [receiver: string]: string[] } = {};
+        this.expenses.forEach(exp => {
+          if (exp.receiver) {
+            if (!receiverMap[exp.receiver]) receiverMap[exp.receiver] = [];
+            (exp.items || []).forEach((item: any) => {
+              receiverMap[exp.receiver].push(item.itemName);
+            });
+          }
+        });
+        this.filteredData = Object.keys(receiverMap).map(receiver => ({
+          receiver,
+          assets: Array.from(new Set(receiverMap[receiver])).join(', ')
         }));
         break;
       default:
@@ -160,131 +241,160 @@ export class ReportsComponent implements OnInit {
     });
   }
 
-exportExpenseTypeReportToPDF() {
-  const now = new Date();
-  const dateTime = now.toLocaleString('ar-EG');
+  exportExpenseTypeReportToPDF() {
+    const now = new Date();
+    const dateTime = now.toLocaleString('ar-EG');
 
-  const title =
-    this.reportExpenseType === 'Support' ? 'تقرير المصروفات حسب أوامر الشراء' :
-    this.reportExpenseType === 'Order' ? 'تقرير المصروفات حسب التعاميد' :
-    this.reportExpenseType === 'Other' ? 'تقرير المصروفات حسب الدعم' : 'تقرير المصروفات';
+    const title =
+      this.reportExpenseType === 'Support' ? 'تقرير المصروفات حسب أوامر الشراء' :
+      this.reportExpenseType === 'Order' ? 'تقرير المصروفات حسب التعاميد' :
+      this.reportExpenseType === 'Other' ? 'تقرير المصروفات حسب الدعم' : 'تقرير المصروفات';
 
-  const printable = document.createElement('div');
-  printable.style.direction = 'rtl';
-  printable.style.fontFamily = 'Arial';
-  printable.style.padding = '20px';
-  printable.style.fontSize = '12px';
+    const printable = document.createElement('div');
+    printable.style.direction = 'rtl';
+    printable.style.fontFamily = 'Arial';
+    printable.style.padding = '20px';
+    printable.style.fontSize = '12px';
 
-  // رأس الصفحة
-  const headerHTML = `
-    <div style="text-align:center; margin-bottom:16px;">
-      <h2 style="margin:0;">${title}</h2>
-      <div style="font-size:13px;">${dateTime}</div>
-    </div>
-  `;
+    // رأس الصفحة
+    const headerHTML = `
+      <div style="text-align:center; margin-bottom:16px;">
+        <h2 style="margin:0;">${title}</h2>
+        <div style="font-size:13px;">${dateTime}</div>
+      </div>
+    `;
 
-  // بناء الجدول من البيانات
-  const tableRows = this.reportExpenseData.map(e => `
-    <tr>
-      <td>${e.orderType === 'Support' ? 'أمر شراء' : e.orderType === 'Order' ? 'تعميد' : 'دعم'}</td>
-      <td>${e.orderNumber || ''}</td>
-      <td>${e.itemName || ''}</td>
-      <td>${e.quantity || ''}</td>
-    </tr>
-  `).join('');
+    // بناء الجدول من البيانات
+    const tableRows = this.reportExpenseData.map(e => `
+      <tr>
+        <td>${e.orderType === 'Support' ? 'أمر شراء' : e.orderType === 'Order' ? 'تعميد' : 'دعم'}</td>
+        <td>${e.orderNumber || ''}</td>
+        <td>${e.itemName || ''}</td>
+        <td>${e.quantity || ''}</td>
+      </tr>
+    `).join('');
 
-  const tableHTML = `
-    <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse; text-align:center;">
-      <thead style="background:#f1f1f1;">
-        <tr>
-          <th>نوع الأمر</th>
-          <th>رقم الأمر</th>
-          <th>العنصر</th>
-          <th>الكمية</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${tableRows}
-      </tbody>
-    </table>
-  `;
+    const tableHTML = `
+      <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse; text-align:center;">
+        <thead style="background:#f1f1f1;">
+          <tr>
+            <th>نوع الأمر</th>
+            <th>رقم الأمر</th>
+            <th>العنصر</th>
+            <th> الكميه</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+    `;
 
-  // تركيب المحتوى النهائي
-  printable.innerHTML = headerHTML + tableHTML;
+    // تركيب المحتوى النهائي
+    printable.innerHTML = headerHTML + tableHTML;
 
-  // إعداد التصدير
-  const html2pdf = (window as any).html2pdf;
-  if (html2pdf) {
-    html2pdf()
-      .from(printable)
-      .set({
-        margin: [10, 10, 10, 10],
-        filename: `${title}.pdf`,
-        html2canvas: {
-          scale: 2
-        },
-        jsPDF: {
-          orientation: 'landscape',
-          unit: 'mm',
-          format: 'a4',
-        }
-      })
-      .save();
-  } else {
-    alert("html2pdf غير متوفر");
+    // إعداد التصدير
+    const html2pdf = (window as any).html2pdf;
+    if (html2pdf) {
+      html2pdf()
+        .from(printable)
+        .set({
+          margin: [10, 10, 10, 10],
+          filename: `${title}.pdf`,
+          html2canvas: {
+            scale: 2
+          },
+          jsPDF: {
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4',
+          }
+        })
+        .save();
+    } else {
+      alert("html2pdf غير متوفر");
+    }
   }
-}
 
 
 
-async exportToPDF() {
-  const element = document.createElement('div');
-  element.style.direction = 'rtl';
-  element.style.fontFamily = 'Arial';
-  element.style.padding = '20px';
-  element.style.fontSize = '12px';
+  async exportToPDF() {
+    const element = document.createElement('div');
+    element.style.direction = 'rtl';
+    element.style.fontFamily = 'Arial';
+    element.style.padding = '20px';
+    element.style.fontSize = '12px';
 
-  const now = new Date();
-  const dateTime = now.toLocaleString('ar-EG');
-  const title = this.reportTypes.find(r => r.key === this.selectedReport)?.label || '';
+    const now = new Date();
+    const dateTime = now.toLocaleString('ar-EG');
+    const title = this.reportTypes.find(r => r.key === this.selectedReport)?.label || '';
 
-  const headerHTML = `
-    <div style="text-align:center; margin-bottom:16px;">
-      <h2 style="margin:0;">${title}</h2>
-      <div style="font-size:13px;">${dateTime}</div>
-    </div>
-  `;
+    const headerHTML = `
+      <div style="text-align:center; margin-bottom:16px;">
+        <h2 style="margin:0;">${title}</h2>
+        <div style="font-size:13px;">${dateTime}</div>
+      </div>
+    `;
 
-  const originalTable = document.querySelector('.table-responsive table')?.cloneNode(true) as HTMLElement;
+    let contentHTML = headerHTML;
 
-  if (originalTable) {
-    // تنسيقات الجدول العامة
-    originalTable.style.width = '100%';
-    originalTable.style.borderCollapse = 'collapse';
-    originalTable.style.border = '2px solid #000';
+    if (this.selectedReport === 'detailedOrderExpense') {
+      // Summary Table
+      const summaryRows = this.unitExpensesReportData.map(row => `
+        <tr></tr>
+          <td>${row.itemName}</td>
+          <td>${row.receivedQuantity}</td>
+          <td>${row.returnedQuantity}</td>
+          <td>${row.actualQuantity}</td>
+        </tr>
+      `).join('');
+      const summaryTable = `
+        <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse; text-align:center; margin-bottom:24px;">
+          <thead style="background:#f8f9fa;">
+            <tr><th colspan="4" style="font-size: 1.3rem; color: #222;">الخلاصه</th></tr>
+            <tr>
+              <th>اسم الصنف</th>
+              <th>الكميه المستلمه</th>
+              <th>الكميه المرتجعه</th>
+              <th>الفعلي</th>
+            </tr>
+          </thead>
+          <tbody>${summaryRows}</tbody>
+        </table>
+      `;
+      // Details Table
+      const detailsRows = this.filteredData.map(row => `
+       
+      `).join('');
+      const detailsTable = `
+       
+      `;
+      contentHTML += summaryTable + detailsTable;
+      element.innerHTML = contentHTML;
+    } else {
+      // Default: export the first table in the report
+      const originalTable = document.querySelector('.table-responsive table')?.cloneNode(true) as HTMLElement;
+      if (originalTable) {
+        originalTable.style.width = '100%';
+        originalTable.style.borderCollapse = 'collapse';
+        originalTable.style.border = '2px solid #000';
+        const ths = originalTable.querySelectorAll('th');
+        ths.forEach(th => {
+          th.style.border = '1px solid #000';
+          th.style.padding = '6px';
+          th.style.backgroundColor = '#f1f1f1';
+        });
+        const tds = originalTable.querySelectorAll('td');
+        tds.forEach(td => {
+          td.style.border = '1px solid #000';
+          td.style.padding = '6px';
+        });
+        element.innerHTML = headerHTML;
+        element.appendChild(originalTable);
+      }
+    }
 
-    // تنسيق رؤوس الأعمدة
-    const ths = originalTable.querySelectorAll('th');
-    ths.forEach(th => {
-      th.style.border = '1px solid #000';
-      th.style.padding = '6px';
-      th.style.backgroundColor = '#f1f1f1';
-    });
-
-    // تنسيق خلايا البيانات
-    const tds = originalTable.querySelectorAll('td');
-    tds.forEach(td => {
-      td.style.border = '1px solid #000';
-      td.style.padding = '6px';
-    });
-
-    // تجميع الصفحة
-    element.innerHTML = headerHTML;
-    element.appendChild(originalTable);
-
-    // تحميل html2pdf بشكل ديناميكي
     const html2pdf = (await import('html2pdf.js')).default;
-
     html2pdf()
       .from(element)
       .set({
@@ -298,13 +408,52 @@ async exportToPDF() {
         }
       })
       .save();
-  } else {
-    alert("لم يتم العثور على جدول للطباعة");
   }
-}
 
-
-
+  // Example logic for generating unit expenses report
+  // This will be used for 'تقرير لمصروفات الوحده' (detailedOrderExpense)
+  generateUnitExpensesReport() {
+    // If no unit filter, include all units
+    const unitName = this.filter.unit ? this.filter.unit : null;
+    const receivedMap: { [itemName: string]: number } = {};
+    this.expenses.forEach(exp => {
+      if (!unitName || exp.unitName === unitName) {
+        (exp.items || []).forEach((item: any) => {
+          if (!receivedMap[item.itemName]) receivedMap[item.itemName] = 0;
+          receivedMap[item.itemName] += Number(item.quantity) || 0;
+        });
+      }
+    });
+    console.log('[DEBUG] receivedMap:', receivedMap);
+    const returnedMap: { [itemName: string]: number } = {};
+    this.returns.forEach(ret => {
+      if (!unitName || ret.unitName === unitName) {
+        if (Array.isArray(ret.items)) {
+          ret.items.forEach((item: any) => {
+            if (!returnedMap[item.itemName]) returnedMap[item.itemName] = 0;
+            returnedMap[item.itemName] += Number(item.quantity) || 0;
+          });
+        } else if (typeof ret.items === 'string' && ret.items) {
+          // If items is a string, treat as single item
+          const itemName = ret.items;
+          if (!returnedMap[itemName]) returnedMap[itemName] = 0;
+          returnedMap[itemName] += Number(ret.quantity) || 0;
+        }
+      }
+    });
+    console.log('[DEBUG] returnedMap:', returnedMap);
+    this.unitExpensesReportData = Object.keys(receivedMap).map(itemName => {
+      const receivedQuantity = receivedMap[itemName] || 0;
+      const returnedQuantity = returnedMap[itemName] || 0;
+      return {
+        itemName,
+        receivedQuantity,
+        returnedQuantity,
+        actualQuantity: receivedQuantity - returnedQuantity
+      };
+    });
+    this.showUnitExpensesTable = this.unitExpensesReportData.length > 0;
+  }
 
   get showExpenseTypeButtons() {
     return this.selectedReport === 'expensesByOrder';
@@ -339,7 +488,7 @@ async exportToPDF() {
       { key: 'type', label: 'نوع العملية' },
       { key: 'documentNumber', label: 'رقم المستند' },
       { key: 'itemName', label: 'اسم الصنف' },
-      { key: 'quantity', label: 'الكمية' }
+      { key: 'quantity', label: 'الكميه المستلمه' }
     ],
     returnedItems: [
       { key: 'unitName', label: 'اسم الوحدة' },
@@ -348,10 +497,19 @@ async exportToPDF() {
       { key: 'quantity', label: 'الكمية' },
       { key: 'disposed', label: 'تم الاسقاط' },
       { key: 'disposeReason', label: 'سبب الاسقاط' }
+    ],
+    receiverAssets: [
+      { key: 'receiver', label: 'اسم المستلم' },
+      { key: 'assets', label: 'العهدة الخاصة به' }
     ]
   };
 
   getCurrentColumns = () => {
     return this.reportColumns[this.selectedReport] || [];
   };
+
+  onUnitChange() {
+    this.generateUnitExpensesReport();
+    this.applyFilters();
+  }
 }

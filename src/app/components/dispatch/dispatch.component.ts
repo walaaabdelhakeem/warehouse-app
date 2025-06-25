@@ -103,7 +103,7 @@ export class DispatchComponent implements OnInit {
     this.warningMessage = '';
     this.successMessage = '';
     if (this.dispatchForm.invalid || !this.selectedFile) {
-      this.warningMessage = 'يرجى تعبئة جميع الحقول وإرفاق الإيصال.';
+      this.warningMessage = 'يرجى تعبئة جميع الحقول وإرفاق السند.';
       return;
     }
     const { stockNumber, quantity } = this.dispatchForm.getRawValue();
@@ -121,6 +121,12 @@ export class DispatchComponent implements OnInit {
     if (quantity > balance.quantityAvailable) {
       this.warningMessage = `الكمية المطلوبة (${quantity}) أكبر من المتوفر (${balance.quantityAvailable}) للصنف: ${stockNumber}`;
       console.log('DEBUG: Requested quantity:', quantity, 'Available:', balance.quantityAvailable);
+      return;
+    }
+    // Check for unique receiptNumber
+    const receiptNumber = this.dispatchForm.get('receiptNumber')?.value;
+    if (this.dispatches.some(d => String(d.receiptNumber).trim() === String(receiptNumber).trim())) {
+      this.warningMessage = 'رقم السند مستخدم من قبل. يرجى إدخال رقم سند فريد.';
       return;
     }
     this.loading = true;

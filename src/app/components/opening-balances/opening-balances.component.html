@@ -24,10 +24,10 @@
           </div>
         </div>
         <div class="form-group mb-3">
-          <label for="stockNumber">رقم المخزون</label>
+          <label for="stockNumber">رقم الماده</label>
           <input type="text" id="stockNumber" class="form-control" formControlName="stockNumber" [ngClass]="{'is-invalid': showValidation && balanceForm.get('stockNumber')?.invalid}" />
           <div *ngIf="showValidation && balanceForm.get('stockNumber')?.invalid" class="invalid-feedback">
-            <div *ngIf="balanceForm.get('stockNumber')?.errors?.required">رقم المخزون مطلوب.</div>
+            <div *ngIf="balanceForm.get('stockNumber')?.errors?.required">رقم الماده مطلوب.</div>
             <div *ngIf="balanceForm.get('stockNumber')?.errors?.pattern">يجب أن يكون رقمًا فقط.</div>
           </div>
         </div>
@@ -62,7 +62,7 @@
     <table class="table table-bordered table-striped">
       <thead class="thead-dark">
         <tr>
-          <th>رقم المخزون</th>
+          <th>رقم الماده</th>
           <th>اسم العنصر</th>
           <th>الكمية المتوفرة</th>
           <th>الأرقام التسلسلية</th>

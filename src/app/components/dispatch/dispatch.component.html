@@ -19,11 +19,11 @@
           </select>
         </div>
         <div class="col-md-6">
-          <label class="form-label">رقم الإيصال</label>
+          <label class="form-label">رقم السند</label>
           <input type="number" class="form-control" formControlName="receiptNumber" placeholder="رقم الإيصال" required min="1" step="1">
         </div>
         <div class="col-md-6">
-          <label class="form-label">رفع الإيصال (PDF/صورة)</label>
+          <label class="form-label">رفع السند (PDF/صورة)</label>
           <input type="file" class="form-control" (change)="onFileChange($event)" accept=".pdf,image/*" required>
         </div>
       </div>
@@ -73,13 +73,13 @@
             <th>#</th>
             <th>اسم الوحدة</th>
             <th>اسم المستلم</th>
-            <th>رقم الإيصال</th>
+            <th>رقم السند</th>
             <th>الصنف</th>
             <th>رقم الصنف</th>
             <th>الرقم التسلسلي</th>
             <th>الكمية</th>
             <th>الحالة</th>
-            <th>الإيصال</th>
+            <th>السند</th>
           </tr>
         </thead>
         <tbody>
@@ -90,7 +90,12 @@
             <td>{{ d.receiptNumber }}</td>
             <td>{{ d.itemName }}</td>
             <td>{{ d.stockNumber }}</td>
-            <td>{{ d.serialNumber }}</td>
+            <td>
+              <ng-container *ngIf="d.serialNumber && d.serialNumber.includes(','); else singleSerial">
+                <span *ngFor="let sn of d.serialNumber.split(',')">{{ sn.trim() }}<br></span>
+              </ng-container>
+              <ng-template #singleSerial>{{ d.serialNumber }}</ng-template>
+            </td>
             <td>{{ d.quantity }}</td>
             <td>
               <span class="badge bg-success" *ngIf="d.status === 'completed'">مكتمل</span>

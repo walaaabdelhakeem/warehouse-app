@@ -35,9 +35,46 @@
     <button class="btn btn-success mb-3" (click)="exportToPDF()">
       <i class="bi bi-file-earmark-pdf"></i> استخراج PDF
     </button>
+    <!-- New Table for تقرير مصروفات الوحده -->
+    <div *ngIf="selectedReport === 'detailedOrderExpense' && showUnitExpensesTable" class="mb-4">
+      <div class="mb-3">
+        <label for="unitSelect" class="form-label">اختر الوحدة:</label>
+        <select id="unitSelect" class="form-select w-auto d-inline-block" [(ngModel)]="filter.unit" (change)="onUnitChange()">
+          <option value="">-- اختر --</option>
+          <option *ngFor="let unit of unitsWithData" [value]="unit.unitName">{{ unit.unitName }}</option>
+        </select>
+      </div>
+      <table class="table table-bordered table-striped text-center mb-4">
+        <thead>
+          <tr>
+            <th colspan="4" style="text-align:center; font-size: 1.3rem; color: #222; background: #f8f9fa;">الخلاصه</th>
+          </tr>
+          <tr>
+            <th>اسم الصنف</th>
+            <th>الكميه المستلمه</th>
+            <th>الكميه المرتجعه</th>
+            <th>الفعلي</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of unitExpensesReportData">
+            <td>{{ row.itemName }}</td>
+            <td>{{ row.receivedQuantity }}</td>
+            <td>{{ row.returnedQuantity }}</td>
+            <td>{{ row.actualQuantity }}</td>
+          </tr>
+          <tr *ngIf="unitExpensesReportData.length === 0">
+            <td colspan="4">لا توجد بيانات</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- Details Table for unit expenses report -->
+     
+    </div>
     <!-- Table for expense type report (only for مصروفات حسب الأمر and when a type is selected) -->
     <table *ngIf="selectedReport === 'expensesByOrder' && reportExpenseType && reportExpenseData.length > 0" class="table table-bordered table-striped text-center mb-4">
       <thead>
+       
         <tr>
           <th>نوع الأمر</th>
           <th>رقم الأمر</th>
@@ -68,27 +105,17 @@
       <tbody>
         <tr *ngFor="let row of filteredData">
           <td *ngFor="let col of getCurrentColumns()">
-            <ng-container *ngIf="col.key === 'linkedToOrder' || col.key === 'disposed'; else normalCell">
-              {{ row[col.key] === true ? 'نعم' : (row[col.key] === false ? 'لا' : (row[col.key] || '-') ) }}
+            <ng-container *ngIf="selectedReport === 'receiverAssets' && col.key === 'assets'; else defaultCell">
+              {{ row[col.key] }}
             </ng-container>
-            <ng-template #normalCell>
-              <ng-container *ngIf="col.key === 'serialNumbers'; else defaultCell">
-                <ng-container *ngIf="row[col.key] && row[col.key].length > 0; else dashCell">
-                  <span *ngFor="let sn of row[col.key].split(',')">
-                    {{ sn.trim() }}<br>
-                  </span>
-                </ng-container>
-                <ng-template #dashCell>-</ng-template>
-              </ng-container>
-              <ng-template #defaultCell>
-                {{ row[col.key] || '-' }}
-              </ng-template>
+            <ng-template #defaultCell>
+              {{ row[col.key] || '-' }}
             </ng-template>
           </td>
         </tr>
       </tbody>
     </table>
-    <div *ngIf="filteredData.length === 0" class="text-center text-muted py-4">
+    <div *ngIf="filteredData.length === 0 && selectedReport !== 'detailedOrderExpense'" class="text-center text-muted py-4">
       لا توجد بيانات مطابقة للفلتر الحالي.
     </div>
   </div>

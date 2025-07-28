@@ -5,27 +5,38 @@
       <div class="sidebar bg-white rounded shadow-sm p-3 h-100 sticky-top">
         <div class="text-center mb-4">
           <a [routerLink]="['/dashboard']">
-            <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/Warehouse%20Manager%20Logo.png" alt="شعار مدير المستودع" style="max-width: 200px; max-height: 150px;">
+            <img src="/image.png" alt="شعار مدير المستودع"
+              style="max-width: 200px; max-height: 150px;">
           </a>
         </div>
-        <h5 class="mb-4 text-center">القائمة الرئيسية</h5>
+        <h5 style="margin-right: 40px;" class="mb-4 text-center">القائمة
+          الرئيسية</h5>
         <ul class="nav flex-column gap-2 text-center">
           <li class="nav-item" *ngFor="let feature of filteredFeatures">
-            <a [routerLink]="feature.link" routerLinkActive="active" class="nav-link d-flex flex-column align-items-center gap-2 fs-6 sidebar-link">
-              <i [class]="feature.icon + ' fs-5'"></i>
-              <span class="whitespace-nowrap">{{ feature.label }}</span>
+            <a
+              [routerLink]="feature.link"
+              routerLinkActive="active"
+              class="nav-link d-flex align-items-center sidebar-link px-3 py-2 rounded transition">
+
+              <div
+                class="icon-box d-flex align-items-center justify-content-center me-2">
+                <i [class]="feature.icon + ' fs-5'"></i>
+              </div>
+
+              <span class="text-nowrap flex-grow-1 text-start">{{ feature.label
+                }}</span>
             </a>
           </li>
         </ul>
-        <button class="btn btn-danger w-100 mt-3" (click)="logout()">خروج</button>
+
+        <button class="btn btn-danger w-100 mt-3"
+          (click)="logout()">خروج</button>
       </div>
     </nav>
     <!-- Main Content -->
     <main class="col-12 col-md-9 col-lg-10">
       <ng-container *ngIf="!isChildRouteActive()">
-        <div class="dashboard-image-area">
-          <img src="https://raw.githubusercontent.com/abanoub1234/kkkk/refs/heads/main/warehousePanner.jpg" alt="Warehouse Planner" />
-        </div>
+
       </ng-container>
       <router-outlet></router-outlet>
     </main>

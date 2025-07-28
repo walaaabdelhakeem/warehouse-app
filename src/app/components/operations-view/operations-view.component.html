@@ -1,0 +1,157 @@
+<div class="container py-4">
+  <h2 class="mb-4 text-center">استعراض العمليات</h2>
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label>نوع العملية</label>
+      <select class="form-select" [(ngModel)]="selectedType">
+        <option *ngFor="let type of operationTypes" [value]="type.key">{{ type.label }}</option>
+      </select>
+    </div>
+    <div class="col-md-4" *ngIf="selectedType === 'expenses' || selectedType === 'returns' || selectedType === 'disposals'">
+      <label>الوحدة</label>
+      <select class="form-select" [(ngModel)]="selectedUnit">
+        <option value="">كل الوحدات</option>
+        <option *ngFor="let unit of units" [value]="unit.unitName">{{ unit.unitName }}</option>
+      </select>
+    </div>
+    <div class="col-md-4" *ngIf="selectedType === 'revenues'">
+      <label>نوع الإيراد</label>
+      <select class="form-select" [(ngModel)]="selectedOrderType">
+        <option value="">كل الأنواع</option>
+        <option *ngFor="let type of orderTypes" [value]="type.value">{{ type.label }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Expenses Table -->
+  <div *ngIf="selectedType === 'expenses'">
+    <table class="table table-bordered table-striped text-center">
+      <thead>
+        <tr>
+          <th>الوحدة</th>
+          <th>المستلم</th>
+          <th>الصنف</th>
+          <th>الكمية</th>
+          <th>نوع العملية</th>
+          <th>رقم المستند</th>
+          <th>السند</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of filteredExpenses">
+          <td>{{ e.unitName }}</td>
+          <td>{{ e.receiver }}</td>
+          <td>
+            <span *ngFor="let item of e.items; let last = last">
+              {{ item.itemName }}<span *ngIf="!last">، </span>
+            </span>
+          </td>
+          <td>
+            <span *ngFor="let item of e.items; let last = last">
+              {{ item.quantity }}<span *ngIf="!last">، </span>
+            </span>
+          </td>
+          <td>{{ e.type }}</td>
+          <td>{{ e.documentNumber || '-' }}</td>
+          <td>
+            <a *ngIf="e.attachment" [href]="e.attachment" target="_blank">عرض</a>
+            <span *ngIf="!e.attachment">-</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Returns Table -->
+  <div *ngIf="selectedType === 'returns'">
+    <table class="table table-bordered table-striped text-center">
+      <thead>
+        <tr>
+          <th>الوحدة</th>
+          <th>المستلم</th>
+          <th>الصنف</th>
+          <th>الكمية</th>
+          <th>سبب الارجاع</th>
+          <th>السند</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of filteredReturns">
+          <td>{{ r.unitName }}</td>
+          <td>{{ r.receiverName }}</td>
+          <td>{{ r.items }}</td>
+          <td>{{ r.quantity }}</td>
+          <td>{{ r.disposeReason || '-' }}</td>
+          <td>
+            <a *ngIf="r.receipt" [href]="r.receipt" target="_blank">عرض</a>
+            <span *ngIf="!r.receipt">-</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Revenues Table -->
+  <div *ngIf="selectedType === 'revenues'">
+    <table class="table table-bordered table-striped text-center">
+      <thead>
+        <tr>
+          <th>نوع الإيراد</th>
+          <th>رقم الأمر</th>
+          <th>الصنف</th>
+          <th>الكمية</th>
+          <th>السند</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let o of filteredOrders">
+          <td>{{ o.orderTypeLabel }}</td>
+          <td>{{ o.orderNumber }}</td>
+          <td>
+            <span *ngFor="let item of o.items; let last = last">
+              {{ item.itemName }}<span *ngIf="!last">، </span>
+            </span>
+          </td>
+          <td>
+            <span *ngFor="let item of o.items; let last = last">
+              {{ item.quantity }}<span *ngIf="!last">، </span>
+            </span>
+          </td>
+          <td>
+            <a *ngIf="o.fileName" [href]="o.file" target="_blank">{{ o.fileName }}</a>
+            <span *ngIf="!o.fileName">-</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Disposals Table -->
+  <div *ngIf="selectedType === 'disposals'">
+    <table class="table table-bordered table-striped text-center">
+      <thead>
+        <tr>
+          <th>الوحدة</th>
+          <th>المستلم</th>
+          <th>الصنف</th>
+          <th>الكمية</th>
+          <th>سبب الاسقاط</th>
+          <th>السند</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let d of filteredDisposals">
+          <td>{{ d.unitName }}</td>
+          <td>{{ d.receiverName }}</td>
+          <td>{{ d.items }}</td>
+          <td>{{ d.quantity }}</td>
+          <td>{{ d.disposeReason || '-' }}</td>
+          <td>
+            <a *ngIf="d.receipt" [href]="d.receipt" target="_blank">عرض</a>
+            <span *ngIf="!d.receipt">-</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

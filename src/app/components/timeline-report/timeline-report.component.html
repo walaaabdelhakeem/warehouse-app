@@ -1,0 +1,80 @@
+<div class="container py-5" dir="rtl">
+  <h2 class="mb-4 text-center">تقرير زمني</h2>
+  <form class="row g-3 mb-4" (ngSubmit)="$event.preventDefault(); applyFilters();">
+    <div class="col-md-3">
+      <label class="form-label">من تاريخ</label>
+      <input type="date" class="form-control" [(ngModel)]="fromDate" name="fromDate" (change)="applyFilters()">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">إلى تاريخ</label>
+      <input type="date" class="form-control" [(ngModel)]="toDate" name="toDate" (change)="applyFilters()">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">اختر الوحدات</label>
+      <select class="form-select" multiple [(ngModel)]="selectedUnits" name="selectedUnits" (change)="applyFilters()">
+        <option *ngFor="let unit of units" [value]="unit.unitName">{{ unit.unitName }}</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">اختر الأصناف</label>
+      <select class="form-select" multiple [(ngModel)]="selectedItems" name="selectedItems" (change)="applyFilters()">
+        <option *ngFor="let item of items" [value]="item.itemName">{{ item.itemName }}</option>
+      </select>
+    </div>
+  </form>
+  <div class="text-end mb-3">
+    <button class="btn btn-danger" (click)="downloadPDF()"><i class="bi bi-file-earmark-pdf"></i> تحميل PDF</button>
+  </div>
+  <div id="timeline-report-print">
+    <div class="mb-3 d-print-block d-none">
+      <h4 class="text-center">تقرير زمني للوحدات</h4>
+      <div class="row mb-2">
+        <div class="col-md-4"><b>الوحدات المختارة:</b> <span *ngIf="selectedUnits.length; else allUnits">{{ selectedUnits.join('، ') }}</span><ng-template #allUnits>الكل</ng-template></div>
+        <div class="col-md-4"><b>الأصناف المختارة:</b> <span *ngIf="selectedItems.length; else allItems">{{ selectedItems.join('، ') }}</span><ng-template #allItems>الكل</ng-template></div>
+        <div class="col-md-4"><b>الفترة:</b> {{ fromDate || '---' }} إلى {{ toDate || '---' }}</div>
+      </div>
+      <div class="text-center mb-2"><b>تاريخ الطباعة:</b> {{ (today() | date:'yyyy/MM/dd') }}</div>
+    </div>
+    <div class="mb-3 d-print-none">
+      <h4 class="text-center">تقرير زمني للوحدات</h4>
+      <div class="row mb-2">
+        <div class="col-md-4"></div>
+        <div class="col-md-4"></div>
+        <div class="col-md-4"><b>الفترة:</b> {{ fromDate || '---' }} إلى {{ toDate || '---' }}</div>
+      </div>
+      <div class="text-center mb-2"><b>تاريخ الطباعة:</b> {{ (today() | date:'yyyy/MM/dd') }}</div>
+    </div>
+    <div *ngIf="loading" class="text-center my-4">
+      <div class="spinner-border text-primary" role="status"><span class="visually-hidden">جاري التحميل...</span></div>
+    </div>
+    <div *ngIf="!loading">
+      <div *ngIf="filteredData.length === 0" class="alert alert-warning text-center">لا توجد بيانات مطابقة للبحث</div>
+      <div *ngFor="let group of filteredData; let i = index" class="mb-4">
+        <table class="table table-bordered timeline-table">
+          <thead class="table-light">
+            <tr>
+              <th style="width:40px">م</th>
+              <th style="width:200px">اسم الوحدة</th>
+              <th *ngFor="let item of group.items">{{ item.itemName }}<br><span class="text-danger">[إجمالي الكمية]</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ i + 1 }}.</td>
+              <td>{{ group.unitName }}</td>
+              <td *ngFor="let item of group.items" class="text-danger">{{ item.total }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+  @media print {
+    .d-print-block { display: block !important; }
+    .d-print-none { display: none !important; }
+    .row.mb-2 > div { display: inline-block !important; width: auto !important; vertical-align: top; }
+    .row.mb-2 { display: block !important; text-align: right; }
+  }
+</style>

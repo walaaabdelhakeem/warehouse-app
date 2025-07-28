@@ -8,14 +8,42 @@
   min-width: 180px;
 }
 .sidebar-link {
-  color: #333;
+  color: #2f3e3e;
+  background-color: #ecf9f1; /* أخضر فاتح جدًا */
   border-radius: 0.5rem;
-  transition: background 0.2s, color 0.2s;
+  transition: all 0.3s ease;
 }
-.sidebar-link.active, .sidebar-link:hover {
-  background: #f0f4ff;
-  color: #0d6efd;
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  background-color: #d4f5e6; /* أخضر أفتح وأمق */
+  color: #ff4d4f; /* أحمر وردي فاتح */
 }
+
+.icon-box {
+  width: 36px;
+  height: 36px;
+  background-color: #fcebe9; /* وردي خفيف */
+  border-radius: 0.375rem;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-link:hover .icon-box,
+.sidebar-link.active .icon-box {
+  background-color: #f08080; /* أحمر خفيف ممزوج بالوردي */
+  color: white;
+}
+
+.sidebar-link i {
+  transition: color 0.3s ease;
+}
+
+.sidebar-link:hover i,
+.sidebar-link.active i {
+  color: white;
+}
+
+
 @media (max-width: 767.98px) {
   .sidebar {
     min-width: 100%;

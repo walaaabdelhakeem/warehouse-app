@@ -1,13 +1,14 @@
-import { Component } from '@angular/core';
+import { Component,OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-
+import { FormsModule } from '@angular/forms';
+// ...existing code...
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -16,7 +17,7 @@ export class LoginComponent {
   errorMsg: string = '';
   submitted = false;
 
-  constructor(
+  constructor( 
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router
@@ -53,11 +54,13 @@ export class LoginComponent {
       return;
     }
     const { username, password } = this.loginForm.value;
-    if (this.auth.login(username, password)) {
-      this.errorMsg = '';
-      this.router.navigate(['/dashboard']);
-    } else {
-      this.errorMsg = 'اسم المستخدم أو كلمة المرور غير صحيحة';
-    }
+    this.auth.login(username, password).subscribe(success => {
+      if (success) {
+        this.errorMsg = '';
+        this.router.navigate(['/dashboard']);
+      } else {
+        this.errorMsg = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+      }
+    });
   }
 }

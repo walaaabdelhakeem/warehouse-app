@@ -1,28 +1,32 @@
+
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface User {
   username: string;
   password: string;
-  role: 'Admin' | 'User';
+  role: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private users: User[] = [
-    { username: 'admin', password: 'admin123', role: 'Admin' },
-    { username: 'user', password: 'user123', role: 'User' }
-  ];
+  private apiUrl = 'http://localhost:3000/users'; // json-server endpoint
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private http: HttpClient) {}
 
-  login(username: string, password: string): boolean {
-    const user = this.users.find(u => u.username === username && u.password === password);
-    if (user) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      return true;
-    }
-    return false;
+  login(username: string, password: string): Observable<boolean> {
+    return this.http.get<User[]>(`${this.apiUrl}?username=${username}&password=${password}`).pipe(
+      map(users => {
+        if (users.length > 0) {
+          localStorage.setItem('currentUser', JSON.stringify(users[0]));
+          return true;
+        }
+        return false;
+      })
+    );
   }
 
   logout() {
@@ -39,7 +43,7 @@ export class AuthService {
     return !!localStorage.getItem('currentUser');
   }
 
-  getRole(): 'Admin' | 'User' | null {
+  getRole(): string | null {
     const user = this.getCurrentUser();
     return user ? user.role : null;
   }

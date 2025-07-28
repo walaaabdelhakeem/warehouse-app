@@ -34,6 +34,8 @@ export class PurchaseOrdersComponent implements OnInit {
     this.orderForm = this.fb.group({
       orderType: ['', Validators.required],
       orderNumber: ['', Validators.required],
+      supplierName: ['', Validators.required], // اسم المورد required
+      date: ['', Validators.required], // تاريخ التعاميد
       items: this.fb.array([this.createItemGroup()])
     });
     this.loadOrders();
@@ -125,6 +127,9 @@ export class PurchaseOrdersComponent implements OnInit {
       return;
     }
     const order = this.orderForm.value;
+    // Use user-selected date
+    // order.date = new Date().toISOString(); // REMOVE this line
+    // اسم المورد is already included in order object
     // Save order as before
     const saveOrder = () => {
       this.http.post('http://localhost:3000/orders', order).subscribe({

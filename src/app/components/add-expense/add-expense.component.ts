@@ -27,7 +27,8 @@ export class AddExpenseComponent implements OnInit {
       receiver: ['', [Validators.required]],
       type: ['', [Validators.required]],
       documentNumber: [''], // Made optional
-      attachment: [null, [Validators.required]]
+      attachment: [null, [Validators.required]],
+      date: ['', [Validators.required]] // تاريخ المصروف
     });
   }
 
@@ -77,6 +78,8 @@ export class AddExpenseComponent implements OnInit {
     if (['مناقله', 'نموذج صرف', 'اخرى'].includes(selectedType)) {
       if (this.addExpenseForm.valid) {
         const newExpense = this.addExpenseForm.value;
+        // Use user-selected date in ISO format
+        newExpense.date = this.formatDateToISOString(this.addExpenseForm.get('date')?.value);
         this.http.post('http://localhost:3000/expenses', newExpense).subscribe({
           next: () => {
             this.expenses.push(newExpense); // Append new expense to the table
@@ -112,7 +115,8 @@ export class AddExpenseComponent implements OnInit {
       receiver: '',
       type: '',
       documentNumber: '',
-      attachment: null
+      attachment: null,
+      date: ''
     });
   }
 
@@ -146,5 +150,12 @@ export class AddExpenseComponent implements OnInit {
       this.addExpenseForm.get('documentNumber')?.clearValidators();
       this.addExpenseForm.get('documentNumber')?.updateValueAndValidity();
     }
+  }
+
+  formatDateToISOString(dateStr: string): string {
+    if (!dateStr) { return ''; }
+    if (dateStr.includes('T')) { return dateStr; }
+    const d = new Date(dateStr);
+    return d.toISOString();
   }
 }

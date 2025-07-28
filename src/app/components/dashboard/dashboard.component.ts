@@ -17,14 +17,15 @@ export class DashboardComponent implements AfterViewInit, OnInit {
     { label: 'تعاميد الشراء', link: 'purchase-orders', icon: 'bi bi-cart-plus' },
     { label: 'الوحدات', link: 'units', icon: 'bi bi-diagram-3' },
     { label: 'الأرصدة الافتتاحية', link: 'opening-balances', icon: 'bi bi-archive' },
-    { label: 'إذن الصرف', link: 'issue-permit', icon: 'bi bi-journal-check' },
     { label: 'الصرف من المستودع', link: 'dispatch', icon: 'bi bi-truck' },
     { label: 'مصروفات الوحدة', link: 'add-expense', icon: 'bi bi-cash-stack' },
     { label: 'مناقلة العهد', link: 'transfer', icon: 'bi bi-arrow-left-right' },
     { label: 'استلام الرجيع', link: 'returns', icon: 'bi bi-arrow-counterclockwise' },
     { label: 'إسقاط العهد', link: 'disposal', icon: 'bi bi-x-octagon' },
     { label: 'التقارير', link: 'reports', icon: 'bi bi-bar-chart' },
+    { label: 'تقرير زمنى', link: 'timeline-report', icon: 'bi bi-clock-history' },
     { label: 'بحث عن مستلم', link: 'user-search', icon: 'bi bi-search' },
+    { label: 'استعراض العمليات', link: 'operations-view', icon: 'bi bi-list-check' },
     { label: ' الاعدادات', link: 'admin', icon: 'bi bi-person-gear' }
   ];
 
@@ -50,7 +51,6 @@ export class DashboardComponent implements AfterViewInit, OnInit {
   }
 
   ngOnInit() {
-    // Get user role from localStorage (case-insensitive)
     const userStr = localStorage.getItem('currentUser');
     if (userStr) {
       try {

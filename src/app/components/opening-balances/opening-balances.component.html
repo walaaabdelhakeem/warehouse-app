@@ -67,7 +67,7 @@
           <th>الكمية المتوفرة</th>
           <th>الأرقام التسلسلية</th>
           <th>مرتبط بأمر</th>
-          <th>الإجراءات</th>
+          <!-- <th>الإجراءات</th> -->
         </tr>
       </thead>
       <tbody>
@@ -77,9 +77,11 @@
           <td>{{ balance.quantityAvailable }}</td>
           <td>{{ balance.serialNumbers }}</td>
           <td>{{ balance.linkedToOrder ? 'نعم' : 'لا' }}</td>
+          <!-- 
           <td>
             <button class="btn btn-danger btn-sm" (click)="deleteBalance(balance.id)">حذف</button>
           </td>
+          -->
         </tr>
       </tbody>
     </table>

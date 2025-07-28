@@ -5,7 +5,6 @@ import { ItemEntryComponent } from './components/item-entry/item-entry.component
 import { PurchaseOrdersComponent } from './components/purchase-orders/purchase-orders.component';
 import { UnitsComponent } from './components/units/units.component';
 import { OpeningBalancesComponent } from './components/opening-balances/opening-balances.component';
-import { IssuePermitComponent } from './components/issue-permit/issue-permit.component';
 import { DispatchComponent } from './components/dispatch/dispatch.component';
 import { AddExpenseComponent } from './components/add-expense/add-expense.component';
 import { ReturnsComponent } from './components/returns/returns.component';
@@ -25,7 +24,6 @@ export const routes: Routes = [
       { path: 'purchase-orders', component: PurchaseOrdersComponent },
       { path: 'units', component: UnitsComponent },
       { path: 'opening-balances', component: OpeningBalancesComponent },
-      { path: 'issue-permit', component: IssuePermitComponent },
       { path: 'dispatch', component: DispatchComponent },
       { path: 'add-expense', component: AddExpenseComponent },
       { path: 'returns', component: ReturnsComponent },
@@ -33,6 +31,8 @@ export const routes: Routes = [
       { path: 'disposal', component: DisposalComponent },
       { path: 'reports', component: ReportsComponent },
       { path: 'user-search', component: UserSearchComponent },
+      { path: 'operations-view', loadComponent: () => import('./components/operations-view/operations-view.component').then(m => m.OperationsViewComponent) },
+      { path: 'timeline-report', loadComponent: () => import('./components/timeline-report/timeline-report.component').then(m => m.TimelineReportComponent) },
       { path: 'admin', component: AdminComponent },
       // Remove the default redirect to 'item-entry' so /dashboard shows dashboard home
     ]

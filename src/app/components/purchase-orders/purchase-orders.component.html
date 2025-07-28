@@ -22,6 +22,20 @@
         <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*,application/pdf">
       </div>
     </div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label for="supplierName" class="form-label">اسم المورد</label>
+        <input id="supplierName" type="text" class="form-control" formControlName="supplierName" [ngClass]="{'is-invalid': submitted && orderForm.get('supplierName')?.invalid}">
+        <div *ngIf="submitted && orderForm.get('supplierName')?.invalid" class="text-danger small mt-1">اسم المورد مطلوب</div>
+      </div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-4">
+        <label for="date" class="form-label">تاريخ التعاميد</label>
+        <input id="date" type="date" class="form-control" formControlName="date" [ngClass]="{'is-invalid': submitted && orderForm.get('date')?.invalid}">
+        <div *ngIf="submitted && orderForm.get('date')?.invalid" class="text-danger small mt-1">تاريخ التعاميد مطلوب</div>
+      </div>
+    </div>
     <h5 class="mt-4 mb-3">الأصناف في التعاميد</h5>
     <div formArrayName="items">
       <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="row g-3 align-items-end mb-2 border rounded p-3 bg-light">
@@ -71,7 +85,9 @@
         <tr>
           <th>اسم التعاميد</th>
           <th>رقم التعاميد</th>
+          <th>اسم المورد</th>
           <th>عدد الأصناف</th>
+          <th>تاريخ الإضافة</th>
           <th>تفاصيل الأصناف</th>
         </tr>
       </thead>
@@ -79,7 +95,9 @@
         <tr *ngFor="let order of orders">
           <td>{{ getOrderTypeLabel(order.orderType) }}</td>
           <td>{{ order.orderNumber }}</td>
+          <td>{{ order.supplierName }}</td>
           <td>{{ order.items.length }}</td>
+          <td>{{ order.date ? (order.date | date:'yyyy/MM/dd') : '-' }}</td>
           <td>
             <ul class="list-unstyled mb-0">
               <li *ngFor="let item of order.items">
@@ -87,12 +105,6 @@
                   {{ item.itemName }}<ng-container *ngIf="item.stockNumber && item.stockNumber !== ''"> ({{ item.stockNumber }})</ng-container>
                 </span>
                 - الكمية: {{ item.quantity }}
-                <span *ngIf="item.serialNumbers && item.serialNumbers.length > 0">
-                  - أرقام تسلسلية:
-                  <span *ngFor="let serial of item.serialNumbers; let si = index">
-                    {{ serial }}<span *ngIf="si < item.serialNumbers.length - 1">, </span>
-                  </span>
-                </span>
               </li>
             </ul>
             <div *ngIf="order.file && order.fileName">
@@ -101,7 +113,7 @@
           </td>
         </tr>
         <tr *ngIf="orders.length === 0">
-          <td colspan="4">لا توجد تعاميد مسجلة بعد</td>
+          <td colspan="6">لا توجد تعاميد مسجلة بعد</td>
         </tr>
       </tbody>
     </table>

@@ -74,6 +74,12 @@ export class TransferComponent implements OnInit {
     });
   }
 
+  getCurrentRecipients(): string[] {
+    if (!this.fromUnit) return [];
+    const unitName = this.fromUnit.name || this.fromUnit.unitName || this.fromUnit;
+    const unit = this.units.find(u => u.unitName === unitName);
+    return unit && unit.recipients ? unit.recipients : [];
+  }
 
   get hasSelectedItems(): boolean {
     return this.assignedItems && this.assignedItems.some(i => i.selected);

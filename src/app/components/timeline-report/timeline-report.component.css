@@ -1,0 +1,28 @@
+/* timeline-report.component.css */
+.container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+h2 {
+  color: #3358e6;
+}
+.timeline-table th, .timeline-table td {
+  text-align: center;
+  vertical-align: middle;
+  font-size: 1.1rem;
+  direction: rtl;
+}
+.timeline-table th {
+  background: #e0e0e0;
+  color: #b30000;
+  font-weight: bold;
+}
+.timeline-table .text-danger {
+  color: #b30000 !important;
+  font-weight: bold;
+}
+.timeline-table {
+  direction: rtl;
+  text-align: right;
+}

@@ -36,6 +36,13 @@
       </div>
     </div>
 
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="date" class="form-label">تاريخ المصروف</label>
+        <input type="date" id="date" class="form-control" formControlName="date" required>
+      </div>
+    </div>
+
     <div class="mb-3">
       <label for="items" class="form-label">العناصر</label>
       <div *ngFor="let item of items.controls; let i = index" [formGroup]="item" class="d-flex align-items-center mb-2">
@@ -66,6 +73,7 @@
         <th>المستلم</th>
         <th>النوع</th>
         <th>رقم المستند</th>
+        <th>تاريخ الإضافة</th>
         <th>الملف المرفق</th>
       </tr>
     </thead>
@@ -80,6 +88,7 @@
         <td>{{ expense.receiver }}</td>
         <td>{{ expense.type }}</td>
         <td>{{ expense.documentNumber }}</td>
+        <td>{{ expense.date ? (expense.date | date:'yyyy/MM/dd') : '-' }}</td>
         <td>
           <a *ngIf="expense.attachment" [href]="expense.attachment" download="attachment" target="_blank">تحميل الملف</a>
           <span *ngIf="!expense.attachment">لا يوجد</span>

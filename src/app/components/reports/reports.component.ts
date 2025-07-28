@@ -14,7 +14,8 @@ import { FormsModule } from '@angular/forms';
 })
 export class ReportsComponent implements OnInit {
   reportTypes = [
-    { key: 'expensesByOrder', label: 'مصروفات حسب الأمر' },
+    // { key: 'expensesByOrder', label: 'الإيرادات حسب الأمر' },
+    { key: 'remainingStock', label: 'اختر نوع التقرير' },
     { key: 'remainingStock', label: 'المخزون المتبقي' },
     { key: 'detailedOrderExpense', label: 'تقرير لمصروفات الوحده' },
     { key: 'returnedItems', label: 'تقرير الرجيع والاسقاط' },
@@ -56,10 +57,17 @@ export class ReportsComponent implements OnInit {
   showUnitExpensesTable = false;
   unitExpensesReportData: any[] = [];
 
+  dispatches: any[] = [];
+  turns: any[] = [];
+  receiverAssetsSummary: any[] = [];
+  receiverAssetsDetails: any[] = [];
+  selectedReceiver: string = '';
+
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
     this.loadDataWithDebug();
+    this.loadDispatchesAndTurns();
     this.applyFilters();
   }
 
@@ -109,6 +117,17 @@ export class ReportsComponent implements OnInit {
     });
   }
 
+  loadDispatchesAndTurns() {
+    this.http.get<any[]>('http://localhost:3000/dispatches').subscribe(data => {
+      this.dispatches = data;
+      console.log('[DEBUG] dispatches loaded:', this.dispatches);
+    });
+    this.http.get<any[]>('http://localhost:3000/turns').subscribe(data => {
+      this.turns = data;
+      console.log('[DEBUG] turns loaded:', this.turns);
+    });
+  }
+
   updateUnitsWithData() {
     if (!this.units || (!this.expenses && !this.returns)) {
       this.unitsWithData = [];
@@ -134,6 +153,10 @@ export class ReportsComponent implements OnInit {
         console.log('unitExpensesReportData:', this.unitExpensesReportData);
         this.showUnitExpensesTable = true;
       }, 500);
+    } else if (this.selectedReport === 'receiverAssets') {
+      this.selectedReceiver = '';
+      this.receiverAssetsSummary = [];
+      this.receiverAssetsDetails = [];
     } else {
       this.showUnitExpensesTable = false;
     }
@@ -338,10 +361,57 @@ export class ReportsComponent implements OnInit {
 
     let contentHTML = headerHTML;
 
-    if (this.selectedReport === 'detailedOrderExpense') {
+    if (this.selectedReport === 'receiverAssets') {
+      // Summary Table
+      const summaryRows = this.receiverAssetsSummary.map(row => `
+        <tr>
+          <td>${row.itemName}</td>
+          <td>${row.received}</td>
+          <td>${row.returned}</td>
+          <td>${row.remaining}</td>
+        </tr>
+      `).join('');
+      const summaryTable = `
+        <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse; text-align:center; margin-bottom:24px;">
+          <thead style="background:#f8f9fa;">
+            <tr><th colspan="4" style="font-size: 1.3rem; color: #222;">الخلاصه</th></tr>
+            <tr>
+              <th>الصنف / المادة</th>
+              <th>الكمية المستلمه</th>
+              <th>الارجاع</th>
+              <th>المتبقي</th>
+            </tr>
+          </thead>
+          <tbody>${summaryRows}</tbody>
+        </table>
+      `;
+      // Details Table
+      const detailsRows = this.receiverAssetsDetails.map(row => `
+        <tr>
+          <td>${row.itemName}</td>
+          <td>${row.quantity}</td>
+          <td>${row.receiptNumber}</td>
+        </tr>
+      `).join('');
+      const detailsTable = `
+        <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse; text-align:center;">
+          <thead style="background:#f8f9fa;">
+            <tr><th colspan="3" style="font-size: 1.1rem; color: #222;">تفاصيل المصروفات</th></tr>
+            <tr>
+              <th>الصنف / المادة</th>
+              <th>الكمية</th>
+              <th>رقم السند</th>
+            </tr>
+          </thead>
+          <tbody>${detailsRows}</tbody>
+        </table>
+      `;
+      contentHTML += summaryTable + detailsTable;
+      element.innerHTML = contentHTML;
+    } else if (this.selectedReport === 'detailedOrderExpense') {
       // Summary Table
       const summaryRows = this.unitExpensesReportData.map(row => `
-        <tr></tr>
+        <tr>
           <td>${row.itemName}</td>
           <td>${row.receivedQuantity}</td>
           <td>${row.returnedQuantity}</td>
@@ -364,10 +434,30 @@ export class ReportsComponent implements OnInit {
       `;
       // Details Table
       const detailsRows = this.filteredData.map(row => `
-       
+        <tr>
+          <td>${row.unitName}</td>
+          <td>${row.receiver}</td>
+          <td>${row.type}</td>
+          <td>${row.documentNumber}</td>
+          <td>${row.itemName}</td>
+          <td>${row.quantity}</td>
+        </tr>
       `).join('');
       const detailsTable = `
-       
+        <table border="1" cellspacing="0" cellpadding="4" style="width:100%; border-collapse:collapse; text-align:center;">
+          <thead style="background:#f8f9fa;">
+            <tr><th colspan="6" style="font-size: 1.1rem; color: #222;">تفاصيل المصروفات للوحده</th></tr>
+            <tr>
+              <th>اسم الوحدة</th>
+              <th>المستلم</th>
+              <th>نوع العملية</th>
+              <th>رقم المستند</th>
+              <th>اسم الصنف</th>
+              <th>الكميه المستلمه</th>
+            </tr>
+          </thead>
+          <tbody>${detailsRows}</tbody>
+        </table>
       `;
       contentHTML += summaryTable + detailsTable;
       element.innerHTML = contentHTML;
@@ -455,6 +545,55 @@ export class ReportsComponent implements OnInit {
     this.showUnitExpensesTable = this.unitExpensesReportData.length > 0;
   }
 
+  onReceiverChange(receiver: string) {
+    this.selectedReceiver = receiver;
+    this.generateReceiverAssetsReport();
+  }
+
+  generateReceiverAssetsReport() {
+    if (!this.selectedReceiver) {
+      this.receiverAssetsSummary = [];
+      this.receiverAssetsDetails = [];
+      return;
+    }
+    // Group dispatches and turns by itemName for the selected receiver
+    const receivedMap: { [itemName: string]: number } = {};
+    const returnedMap: { [itemName: string]: number } = {};
+    // Dispatches: received
+    (this.dispatches || []).forEach(d => {
+      if (d.receiverName === this.selectedReceiver) {
+        if (!receivedMap[d.itemName]) receivedMap[d.itemName] = 0;
+        receivedMap[d.itemName] += Number(d.quantity) || 0;
+      }
+    });
+    // Turns: returned/disposed
+    (this.turns || []).forEach(t => {
+      if (t.receiverName === this.selectedReceiver) {
+        if (!returnedMap[t.items]) returnedMap[t.items] = 0;
+        returnedMap[t.items] += Number(t.quantity) || 0;
+      }
+    });
+    // Summary Table
+    this.receiverAssetsSummary = Object.keys(receivedMap).map(itemName => {
+      const received = receivedMap[itemName] || 0;
+      const returned = returnedMap[itemName] || 0;
+      return {
+        itemName,
+        received,
+        returned,
+        remaining: received - returned
+      };
+    });
+    // Details Table
+    this.receiverAssetsDetails = (this.dispatches || [])
+      .filter(d => d.receiverName === this.selectedReceiver)
+      .map(d => ({
+        itemName: d.itemName,
+        quantity: d.quantity,
+        receiptNumber: d.receiptNumber
+      }));
+  }
+
   get showExpenseTypeButtons() {
     return this.selectedReport === 'expensesByOrder';
   }
@@ -469,14 +608,14 @@ export class ReportsComponent implements OnInit {
       { key: 'orderId', label: 'رقم الأمر' }
     ],
     remainingStock: [
-      { key: 'stockNumber', label: 'رقم المخزون' },
+      { key: 'stockNumber', label: 'رقم الماده ' },
       { key: 'itemName', label: 'اسم الصنف' },
       { key: 'quantityAvailable', label: 'الكمية المتاحة' },
       { key: 'serialNumbers', label: 'الأرقام التسلسلية' },
       { key: 'linkedToOrder', label: 'مرتبط بأمر' }
     ],
     openingBalances: [
-      { key: 'stockNumber', label: 'رقم المخزون' },
+      { key: 'stockNumber', label: 'رقم الماده ' },
       { key: 'itemName', label: 'اسم الصنف' },
       { key: 'quantityAvailable', label: 'الكمية المتاحة' },
       { key: 'serialNumbers', label: 'الأرقام التسلسلية' },
@@ -498,10 +637,10 @@ export class ReportsComponent implements OnInit {
       { key: 'disposed', label: 'تم الاسقاط' },
       { key: 'disposeReason', label: 'سبب الاسقاط' }
     ],
-    receiverAssets: [
-      { key: 'receiver', label: 'اسم المستلم' },
-      { key: 'assets', label: 'العهدة الخاصة به' }
-    ]
+    // receiverAssets: [
+    //   { key: 'receiver', label: 'اسم المستلم' },
+    //   { key: 'assets', label: 'العهدة الخاصة به' }
+    // ]
   };
 
   getCurrentColumns = () => {
@@ -511,5 +650,11 @@ export class ReportsComponent implements OnInit {
   onUnitChange() {
     this.generateUnitExpensesReport();
     this.applyFilters();
+  }
+
+  getUniqueReceiversFromDispatches(): string[] {
+    // Get unique receiver names from dispatches
+    const names = (this.dispatches || []).map(d => d.receiverName).filter(Boolean);
+    return Array.from(new Set(names));
   }
 }

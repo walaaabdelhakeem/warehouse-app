@@ -5,6 +5,7 @@ import { NO_ERRORS_SCHEMA } from '@angular/core';
 import '@angular/compiler';
 import { CommonModule, NgFor } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-purchase-orders',
@@ -182,7 +183,7 @@ export class PurchaseOrdersComponent implements OnInit {
   }
 
   async updateOpeningBalancesWithOrder(order: any) {
-  const openingBalances = await this.http.get<any[]>('http://localhost:3000/openingBalances').toPromise();
+const openingBalances = await firstValueFrom(this.http.get<any[]>('http://localhost:3000/openingBalances'));
 
   for (const item of order.items) {
     const serialsArray = (item.serialNumbers || []).map((sn:any) => String(sn));
@@ -197,8 +198,10 @@ export class PurchaseOrdersComponent implements OnInit {
         linkedToOrder: true,
         orderNumber: order.orderNumber   // ✅ إضافة رقم الأمر هنا
       };
-      await this.http.put(`http://localhost:3000/openingBalances/${balance.id}`, updated).toPromise();
-    } else {
+
+      await firstValueFrom(
+        this.http.put(`http://localhost:3000/openingBalances/${balance.id}`, updated)
+      );    } else {
       const newBalance = {
         stockNumber: item.stockNumber || '',
         itemName: item.itemName,
@@ -207,8 +210,9 @@ export class PurchaseOrdersComponent implements OnInit {
         linkedToOrder: true,
         orderNumber: order.orderNumber   // ✅ إضافة رقم الأمر هنا
       };
-      await this.http.post('http://localhost:3000/openingBalances', newBalance).toPromise();
-    }
+  await firstValueFrom(
+        this.http.post('http://localhost:3000/openingBalances', newBalance)
+      );    }
   }
 }
 

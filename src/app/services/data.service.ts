@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { forkJoin } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -37,25 +38,27 @@ export class DataService {
   /**
    * Transfer custody of selected items to a new receiver
    */
-  transferCustody(transferData: {
-    fromUnit: any,
-    newReceiver: string,
-    items: any[],
-    file?: File | null
-  }): Observable<any> {
-    // For demo: update each assignment's receiver, optionally upload file
-    const updateRequests = transferData.items.map(item => {
-      const updated = { ...item, receiver: transferData.newReceiver };
-      return this.http.patch(`${this.apiUrl}/assignments/${item.id}`, updated);
-    });
-    // If file upload is needed, you can add logic here (not supported by json-server by default)
-    if (updateRequests.length) {
-      // For demo, only return the first request's observable (in real app, use forkJoin for all)
-      return updateRequests[0];
-    } else {
-      return new Observable(observer => { observer.next(null); observer.complete(); });
-    }
-  }
+
+transferCustody(products: any[], recipientId: string) {
+  // نجهز مصفوفة الـ observables
+  const requests = products.map(product => {
+    const updatedProduct = {
+      ...product,
+      recipientId: recipientId,
+      status: 'Transferred'
+    };
+
+    // استدعاء الـ API لتحديث المنتج
+    return this.http.put(
+      `${this.apiUrl}/products/${product.id}`,
+      updatedProduct
+    );
+  });
+
+  // نرجع forkJoin عشان كلهم يتنفذوا مع بعض
+  return forkJoin(requests);
+}
+
 
   /**
    * Dispose an item: mark as disposed and remove from assignments
@@ -82,5 +85,26 @@ export class DataService {
     }
     // For demo, return patch or delete observable
     return deleteReq ? deleteReq : patch;
+  }
+
+  
+  // جلب البيانات
+  getRecords(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/custodyrecord`);
+  }
+
+  // إضافة بيانات جديدة
+  addRecord(record: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/custodyrecord`, record);
+  }
+
+  // تعديل بيانات موجودة
+  updateRecord(id: string, updatedData: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/custodyrecord/${id}`, updatedData);
+  }
+
+  // حذف بيانات
+  deleteRecord(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/custodyrecord/${id}`);
   }
 }

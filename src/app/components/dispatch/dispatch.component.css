@@ -12,6 +12,7 @@
   background: linear-gradient(90deg, #0d6efd 60%, #0a58ca 100%);
   border: none;
 }
+
 @media (max-width: 600px) {
   .container {
     padding: 0.5rem !important;

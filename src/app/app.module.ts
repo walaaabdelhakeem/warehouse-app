@@ -10,23 +10,18 @@ import { CommonModule } from '@angular/common';
 import { OpeningBalancesComponent } from './components/opening-balances/opening-balances.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    LoginComponent,
-    PurchaseOrdersComponent,
-    OpeningBalancesComponent // Corrected the component name
-  ],
-
+  declarations: [],
   imports: [
     BrowserModule,
     AppRoutingModule,
-    ReactiveFormsModule,
-    HttpClientModule,
-    CommonModule,
-    FormsModule // Added FormsModule for ngModel
+    AppComponent,
+    LoginComponent,
+    PurchaseOrdersComponent,
+    OpeningBalancesComponent
   ],
-  exports: [PurchaseOrdersComponent],
-  providers: [],
-  bootstrap: [AppComponent]
+  exports: [
+    PurchaseOrdersComponent // لو محتاج تصدّره
+  ]
 })
+
 export class AppModule {}

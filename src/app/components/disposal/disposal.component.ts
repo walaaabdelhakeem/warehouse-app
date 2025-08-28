@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-disposal',
-    standalone: true,
+  standalone: true,
   imports: [CommonModule, HttpClientModule, ReactiveFormsModule, FormsModule],
   templateUrl: './disposal.component.html',
   styleUrls: ['./disposal.component.css']
@@ -29,7 +29,7 @@ export class DisposalComponent implements OnInit {
   reportType: string = '';
   reportData: any[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit() {
     this.loadReturns();
@@ -43,6 +43,9 @@ export class DisposalComponent implements OnInit {
       this.units = uniqueUnits.map(unitName => ({ unitName }));
     });
   }
+  get disposedReturns() {
+    return this.returns.filter(r => r.disposed);
+  }
 
   onUnitChange() {
     this.selectedReceiver = null;
@@ -54,7 +57,8 @@ export class DisposalComponent implements OnInit {
       this.receivers = Array.from(new Set(this.returns.filter(r => r.unitName === (this.selectedUnit.unitName || this.selectedUnit)).map(r => r.receiverName)));
       // Items from returns for this unit (all items, regardless of receiver)
       const unitName = this.selectedUnit.unitName || this.selectedUnit;
-      this.items = this.returns.filter(r => r.unitName === unitName).map(r => r);
+      this.items = this.returns
+        .filter(r => r.unitName === unitName && r.quantity > 0);
     }
     this.filterReturns();
   }
@@ -65,8 +69,12 @@ export class DisposalComponent implements OnInit {
       const unitName = this.selectedUnit.unitName || this.selectedUnit;
       // Get all items (with name and quantity) for this unit and receiver
       this.items = this.returns
-        .filter(r => r.unitName === unitName && r.receiverName === this.selectedReceiver)
-        .map(r => r); // Use the full return object so all fields are available
+        .filter(r =>
+          r.unitName === unitName &&
+          r.receiverName === this.selectedReceiver &&
+          r.disposed_quantity > 0 // 👈 هنا الشرط اللي يمنع العناصر بصفر
+        );
+      ; // Use the full return object so all fields are available
     } else {
       this.items = [];
     }
@@ -90,17 +98,34 @@ export class DisposalComponent implements OnInit {
   }
 
   onSubmit() {
-    if (!this.selectedUnit || !this.selectedReceiver || !this.selectedItem || !this.quantity || !this.fileToUpload) { return; }
-    // Simulate disposal by PATCHing the return record (not dispatches)
-    const updated = { ...this.selectedItem, quantity: this.selectedItem.quantity - this.quantity, disposed: true, disposeReason: this.reason };
+    if (!this.selectedUnit || !this.selectedReceiver || !this.selectedItem || !this.quantity || !this.fileToUpload) {
+      return;
+    }
+
+    const updated = {
+      ...this.selectedItem,
+      disposed_quantity: this.selectedItem.disposed_quantity - this.quantity,
+      disposed: true,
+      disposeReason: this.reason
+    };
+
     this.http.patch(`${this.apiUrl}/returns/${this.selectedItem.id}`, updated).subscribe(() => {
+      // ✅ حدّث العنصر في القائمة المحلية this.returns مباشرة
+      const index = this.returns.findIndex(r => r.id === this.selectedItem.id);
+      if (index !== -1) {
+        this.returns[index] = updated;
+      }
+
+      // ✅ تحديث الجدول مباشرة
+      this.filterReturns();
+
       this.successMessage = 'تم الإسقاط بنجاح!';
-      this.onUnitChange();
       this.selectedReceiver = null;
       this.selectedItem = null;
       this.quantity = 1;
       this.reason = '';
       this.fileToUpload = null;
+
       setTimeout(() => this.successMessage = '', 4000);
     }, error => {
       console.error('Disposal PATCH error:', error);
@@ -109,10 +134,11 @@ export class DisposalComponent implements OnInit {
     });
   }
 
+
   onItemChange() {
     // Automatically set quantity based on selected item
     if (this.selectedItem) {
-      this.quantity = this.selectedItem.quantity;
+      this.quantity = this.selectedItem.disposed_quantity;
       console.log('DEBUG: Selected item:', this.selectedItem, 'Auto-set quantity:', this.quantity);
     } else {
       this.quantity = 1;

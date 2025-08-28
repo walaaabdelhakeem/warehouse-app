@@ -14,6 +14,8 @@ import { ReportsComponent } from './components/reports/reports.component';
 import { UserSearchComponent } from './components/user-search/user-search.component';
 import { AdminComponent } from './components/admin/admin.component';
 import { AuthGuard } from './guards/auth.guard';
+import { AddCustodyRecordComponent } from './components/add-custody-record/add-custody-record.component';
+import { ReviewCustodyRecordComponent } from './components/review-custody-record/review-custody-record.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -30,6 +32,8 @@ export const routes: Routes = [
       { path: 'transfer', component: TransferComponent },
       { path: 'disposal', component: DisposalComponent },
       { path: 'reports', component: ReportsComponent },
+      { path: 'custodyrecord', component: AddCustodyRecordComponent },
+      { path: 'Review-custody', component: ReviewCustodyRecordComponent },
       { path: 'user-search', component: UserSearchComponent },
       { path: 'operations-view', loadComponent: () => import('./components/operations-view/operations-view.component').then(m => m.OperationsViewComponent) },
       { path: 'timeline-report', loadComponent: () => import('./components/timeline-report/timeline-report.component').then(m => m.TimelineReportComponent) },

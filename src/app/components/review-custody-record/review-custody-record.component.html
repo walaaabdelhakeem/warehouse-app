@@ -1,0 +1,65 @@
+<div class="container mt-4" dir="rtl">
+  <h4 class="mb-3">مراجعة سجلات العهدة</h4>
+
+  <table class="table table-bordered table-striped text-center align-middle">
+    <thead class="table-primary">
+      <tr>
+        <th>الملاحظات</th>
+        <th>التاريخ</th>
+        <th>الملف</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let record of records">
+        <!-- الملاحظات -->
+        <td>
+          <span *ngIf="!record.editing">{{ record.notes }}</span>
+          <input *ngIf="record.editing" type="text" [(ngModel)]="record.notes" class="form-control" />
+        </td>
+
+        <!-- التاريخ -->
+        <td>
+          <span *ngIf="!record.editing">{{ record.date | date: 'yyyy-MM-dd' }}</span>
+          <input *ngIf="record.editing" type="date" [(ngModel)]="record.date" class="form-control" />
+        </td>
+
+        <!-- عرض الملف -->
+        <td>
+          <button class="btn btn-link text-primary" (click)="viewFile(record.file)">عرض</button>
+        </td>
+
+        <!-- الإجراءات -->
+        <td>
+          <div *ngIf="!record.editing">
+            <button class="btn btn-sm btn-warning" (click)="startEditing(record)">تعديل</button>
+            <button class="btn btn-sm btn-danger" (click)="confirmDelete(record.id)">حذف</button>
+          </div>
+          <div *ngIf="record.editing">
+            <button class="btn btn-sm btn-success" (click)="saveChanges(record)">حفظ</button>
+            <button class="btn btn-sm btn-secondary" (click)="cancelEditing(record)">إلغاء</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- نافذة تأكيد الحذف -->
+  <div class="modal" tabindex="-1" [ngClass]="{'show d-block': showDeleteModal}">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">تأكيد الحذف</h5>
+          <button type="button" class="btn-close" (click)="closeModal()"></button>
+        </div>
+        <div class="modal-body">
+          <p>هل أنت متأكد أنك تريد حذف هذا السجل؟</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">إلغاء</button>
+          <button type="button" class="btn btn-danger" (click)="deleteRecord()">حذف</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

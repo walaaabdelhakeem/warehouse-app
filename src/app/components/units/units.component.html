@@ -9,25 +9,33 @@
           <form [formGroup]="unitForm" (ngSubmit)="onSubmit()" novalidate>
             <div class="mb-3">
               <label class="form-label">اسم الوحدة</label>
-              <input type="text" class="form-control" formControlName="unitName" [ngClass]="{'is-invalid': submitted && f['unitName'].invalid}">
-              <div *ngIf="submitted && f['unitName'].invalid" class="invalid-feedback">
+              <input type="text" class="form-control" formControlName="unitName"
+                [ngClass]="{'is-invalid': submitted && f['unitName'].invalid}">
+              <div *ngIf="submitted && f['unitName'].invalid"
+                class="invalid-feedback">
                 اسم الوحدة مطلوب (2-50 حرف)
               </div>
             </div>
 
             <div class="form-group mb-3">
               <label for="recipientCount">عدد أسماء المستلمين</label>
-              <input type="number" id="recipientCount" class="form-control" formControlName="recipientCount" (change)="onRecipientCountChange()" min="1" />
+              <input type="number" id="recipientCount" class="form-control"
+                formControlName="recipientCount"
+                (change)="onRecipientCountChange()" min="1" />
             </div>
 
             <div formArrayName="recipients">
-              <div *ngFor="let control of recipientsFormArray.controls; let i = index" class="form-group mb-2">
+              <div
+                *ngFor="let control of recipientsFormArray.controls; let i = index"
+                class="form-group mb-2">
                 <label>اسم المستلم {{ i + 1 }}</label>
-                <input type="text" class="form-control" [formControlName]="i" required />
+                <input type="text" class="form-control" [formControlName]="i"
+                  required />
               </div>
             </div>
 
-            <button type="submit" class="btn btn-success w-100">حفظ الوحدة</button>
+            <button type="submit" class="btn btn-success w-100">حفظ
+              الوحدة</button>
           </form>
         </div>
       </div>
@@ -50,14 +58,21 @@
                 <tr *ngFor="let unit of units; let i = index">
                   <td>{{ unit.unitName }}</td>
                   <td>{{ unit.unitNumber }}</td>
-                  <td>
-                    <button class="btn btn-danger btn-sm" (click)="deleteUnit(i)">
+                  <td class="d-flex justify-content-center gap-1 flex-nowrap">
+                    <button class="btn btn-success btn-sm me-1"
+                      (click)="editUnit(i)">
+                      تعديل
+                    </button>
+                    <button class="btn btn-danger btn-sm"
+                      (click)="deleteUnit(i)">
                       حذف
                     </button>
                   </td>
+
                 </tr>
                 <tr *ngIf="units.length === 0">
-                  <td colspan="3" class="text-muted">لا توجد وحدات مضافة بعد</td>
+                  <td colspan="3" class="text-muted">لا توجد وحدات مضافة
+                    بعد</td>
                 </tr>
               </tbody>
             </table>

@@ -1,59 +1,80 @@
 <div class="container mt-5">
   <h2 class="text-center mb-4">استلام الرجيع</h2>
-  
+
   <form (ngSubmit)="onSubmit()" [formGroup]="returnsForm" novalidate>
-    
+
     <div class="form-group">
       <label for="unitName">اسم الوحدة</label>
-      <select id="unitName" class="form-control" formControlName="unitName" (change)="onUnitChange($event)" required>
-        <option value="">اختر اسم الوحدة</option>
-        <option *ngFor="let unit of availableUnits" [value]="unit.unitName">{{ unit.unitName }}</option>
+      <select id="unitName" class="form-control" formControlName="unitName"
+        (change)="onUnitChange()" required>
+        <option value>اختر اسم الوحدة</option>
+        <option *ngFor="let unit of availableUnits" [value]="unit.unitName">{{
+          unit.unitName }}</option>
       </select>
-      <div *ngIf="returnsForm.get('unitName')?.invalid && returnsForm.get('unitName')?.touched" class="text-danger">
+      <div
+        *ngIf="returnsForm.get('unitName')?.invalid && returnsForm.get('unitName')?.touched"
+        class="text-danger">
         يرجى اختيار اسم الوحدة.
       </div>
     </div>
 
     <div class="form-group">
       <label for="receiverName">اسم المستلم</label>
-      <select id="receiverName" class="form-control" formControlName="receiverName" (change)="onReceiverChange()" required>
-        <option value="">اختر اسم المستلم</option>
-        <option *ngFor="let recipient of recipients" [value]="recipient">{{ recipient }}</option>
+      <select id="receiverName" class="form-control"
+        formControlName="receiverName" (change)="onReceiverChange()" required>
+        <option value>اختر اسم المستلم</option>
+        <option *ngFor="let recipient of recipients" [value]="recipient">{{
+          recipient }}</option>
       </select>
-      <div *ngIf="returnsForm.get('receiverName')?.invalid && returnsForm.get('receiverName')?.touched" class="text-danger">
+      <div
+        *ngIf="returnsForm.get('receiverName')?.invalid && returnsForm.get('receiverName')?.touched"
+        class="text-danger">
         يرجى اختيار اسم المستلم.
       </div>
     </div>
 
     <div class="form-group">
-      <label for="receipt">إرفاق إيصال (PDF أو صورة)</label>
-      <input type="file" id="receipt" class="form-control" (change)="onFileChange($event)" accept="application/pdf,image/*" />
+      <label for="receipt">إرفاق السند (PDF أو صورة)</label>
+      <input type="file" id="receipt" class="form-control"
+        (change)="onFileChange($event)" accept="application/pdf,image/*" />
     </div>
 
     <div class="form-group">
       <div class="row">
         <div class="col-md-6">
           <label for="items" class="form-label">العناصر</label>
-          <select id="items" class="form-select" formControlName="items" (change)="onItemChange()" required>
-            <option value="" disabled>اختر العنصر</option>
-            <option *ngFor="let item of availableItems" [value]="item.itemName">{{ item.itemName }} ({{ item.quantity }})</option>
+          <select id="items" class="form-select" formControlName="items"
+            (change)="onItemChange()" required>
+            <option value disabled>اختر العنصر</option>
+            <option *ngFor="let item of availableItems"
+              [value]="item.itemName">{{ item.itemName }} ({{ item.quantity
+              }})</option>
           </select>
         </div>
         <div class="col-md-6">
           <label for="quantity" class="form-label">الكمية</label>
-          <input id="quantity" type="number" min="1" class="form-control" formControlName="quantity" [readonly]="true">
+          <input id="quantity" type="number" min="1" class="form-control"
+            formControlName="quantity">
         </div>
       </div>
     </div>
+    <div class="form-group">
+      <label for="reason">سبب الإرجاع</label>
+      <input type="text" id="reason" class="form-control"
+        formControlName="reason" placeholder="أدخل سبب الإرجاع" />
+    </div>
 
-    <button type="submit" class="btn btn-primary btn-block mt-3" [disabled]="returnsForm.invalid">تنفيذ</button>
+    <button type="submit" class="btn btn-primary btn-block mt-3"
+      [disabled]="returnsForm.invalid">تنفيذ</button>
   </form>
 
   <!-- عرض وتحميل الملف بعد الرفع -->
   <div *ngIf="uploadedFile" class="mt-4">
     <p>تم رفع الملف بنجاح:</p>
-    <a [href]="uploadedFile" target="_blank" class="btn btn-outline-info mr-2">عرض الملف</a>
-    <a [href]="uploadedFile" download="uploaded-file" class="btn btn-outline-success">تحميل الملف</a>
+    <a [href]="uploadedFile" target="_blank"
+      class="btn btn-outline-info mr-2">عرض الملف</a>
+    <a [href]="uploadedFile" download="uploaded-file"
+      class="btn btn-outline-success">تحميل الملف</a>
   </div>
 
   <!-- عرض البيانات المسترجعة -->
@@ -66,17 +87,28 @@
           <th>اسم المستلم</th>
           <th>العناصر</th>
           <th>الكمية</th>
+          <th>السبب</th>
           <th>السند</th>
+          <th>الإجراء</th>
+
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let return of returns">
+        <tr *ngFor="let return of returns ">
           <td>{{ return.unitName }}</td>
           <td>{{ return.receiverName }}</td>
           <td>{{ return.items }}</td>
           <td>{{ return.quantity }}</td>
+          <td>{{ return.disposeReason }}</td>
+
           <td>
-            <a *ngIf="return.receipt" [href]="return.receipt" target="_blank">عرض السند</a>
+            <a *ngIf="return.receipt" [href]="return.receipt"
+              target="_blank">عرض السند</a>
+          </td>
+          <td>
+            <button (click)="cancelReturn(return)" class="btn btn-danger">
+            إلغاء
+            </button>
           </td>
         </tr>
       </tbody>

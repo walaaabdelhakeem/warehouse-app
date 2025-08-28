@@ -1,13 +1,15 @@
+// returns.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, firstValueFrom } from 'rxjs';
+import { ReturnsService } from '../../services/returns.service';
 
 @Component({
   selector: 'app-returns',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './returns.component.html',
   styleUrls: ['./returns.component.css']
 })
@@ -17,184 +19,217 @@ export class ReturnsComponent implements OnInit {
   availableUnits: any[] = [];
   uploadedFile: string | null = null;
   returns: any[] = [];
-  recipients: any[] = []; // Add recipients array
+  recipients: any[] = [];
   expenses: any[] = [];
-  filteredExpenses: any[] = [];
+  isProcessing = false;
 
-  constructor(private fb: FormBuilder, private http: HttpClient) {}
+  constructor(private fb: FormBuilder, private returnsService: ReturnsService) {}
 
   ngOnInit(): void {
+    this.initForm();
+    this.loadInitialData();
+  }
+
+  private initForm(): void {
     this.returnsForm = this.fb.group({
       unitName: ['', Validators.required],
-      receiverName: [{ value: '', disabled: true }], // Disable receiverName by default
+      receiverName: ['', Validators.required],
       receipt: [null],
       items: ['', Validators.required],
-      quantity: ['', [Validators.required, Validators.min(1)]]
-    });
-
-    this.loadItemsAndUnits();
-    this.loadReturns();
-    this.loadExpenses();
-  }
-
-  // Remove items loading from units/items endpoints, only use expenses for items
-  loadItemsAndUnits(): void {
-    this.http.get<any[]>('http://localhost:3000/units').subscribe(data => {
-      // Do not set availableItems here
-      this.availableUnits = data;
-    }, error => {
-      console.error('Error loading units:', error);
+      quantity: ['', [Validators.required, Validators.min(1)]],
+      reason: ['', Validators.required]
     });
   }
 
-  loadReturns(): void {
-    this.http.get<any>('http://localhost:3000/returns').subscribe(data => {
-      this.returns = data;
-    }, error => {
-      console.error('Error loading returns:', error);
+  private loadInitialData(): void {
+    forkJoin({
+      expenses: this.returnsService.getExpensesSummary(),
+      returns: this.returnsService.getReturnsPaginated()
+    }).subscribe({
+      next: (data) => {
+        this.expenses = data.expenses;
+        this.returns = data.returns;
+        this.initUnits();
+      },
+      error: (error) => console.error('Error loading data:', error)
     });
   }
 
-  loadExpenses(): void {
-    this.http.get<any[]>('http://localhost:3000/expenses').subscribe(data => {
-      this.expenses = data;
-      // Only show units that exist in expenses
-      const uniqueUnits = Array.from(new Set(data.map(e => e.unitName)));
-      this.availableUnits = uniqueUnits.map(unitName => ({ unitName }));
-    }, error => {
-      console.error('Error loading expenses:', error);
-    });
+  private initUnits(): void {
+    const uniqueUnits = Array.from(new Set(this.expenses.map(e => e.unitName)));
+    this.availableUnits = uniqueUnits.map(unitName => ({ unitName }));
+  }
+
+  onUnitChange(): void {
+    const unit = this.returnsForm.get('unitName')?.value;
+    const unitExpenses = this.expenses.filter(e => e.unitName === unit);
+    this.recipients = [...new Set(unitExpenses.map(e => e.receiverName))];
+  }
+
+  onReceiverChange(): void {
+    const unit = this.returnsForm.get('unitName')?.value;
+    const receiver = this.returnsForm.get('receiverName')?.value;
+    const expenses = this.expenses.filter(e => e.unitName === unit && e.receiverName === receiver);
+    this.availableItems = expenses.flatMap(e => e.items);
+  }
+
+  onItemChange(): void {
+    // ممكن تحط أي لوجيك إضافي هنا
   }
 
   onFileChange(event: any): void {
     const file = event.target.files[0];
-    if (file) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.uploadedFile = reader.result as string;
       this.returnsForm.patchValue({ receipt: file });
-    }
+    };
+    reader.readAsDataURL(file);
   }
 
-  onUnitChange() {
-    const selectedUnitName = (this.returnsForm.get('unitName')?.value || '').toString().trim();
-    console.log('DEBUG: onUnitChange selectedUnitName =', selectedUnitName);
-    // Only show units that exist in expenses (case-insensitive, trimmed)
-    const unitExpenses = this.expenses.filter(e =>
-      (e.unitName?.toString().trim().toLowerCase() || '') === selectedUnitName.toLowerCase()
-    );
-    console.log('DEBUG: onUnitChange unitExpenses =', unitExpenses);
-    // Collect all unique receivers from expenses, trimmed and case-insensitive
-    const expenseRecipients = Array.from(
-      new Set(
-        unitExpenses
-          .map(e => (e.receiver?.toString().trim() || ''))
-          .filter(r => r)
-          .map(r => r.toLowerCase())
-      )
-    ).map(lowerR => {
-      // Find the first matching receiver in original case
-      const orig = unitExpenses.find(e => (e.receiver?.toString().trim().toLowerCase() || '') === lowerR);
-      return orig ? orig.receiver.toString().trim() : lowerR;
-    });
-    console.log('DEBUG: onUnitChange expenseRecipients =', expenseRecipients);
-    if (expenseRecipients.length > 0) {
-      this.recipients = expenseRecipients;
-      this.returnsForm.get('receiverName')?.enable();
-      this.returnsForm.get('receiverName')?.setValidators([Validators.required]);
-      this.returnsForm.get('receiverName')?.updateValueAndValidity();
-    } else {
-      this.recipients = [];
-      this.returnsForm.get('receiverName')?.disable();
-      this.returnsForm.get('receiverName')?.clearValidators();
-      this.returnsForm.get('receiverName')?.updateValueAndValidity();
-    }
-    // Clear items and quantity until receiver is selected
-    this.availableItems = [];
-    this.returnsForm.patchValue({ items: '', quantity: '' });
-    console.log('DEBUG: onUnitChange availableItems cleared');
-  }
-
-  onReceiverChange() {
-    const selectedUnitNameRaw = this.returnsForm.get('unitName')?.value;
-    const selectedReceiverRaw = this.returnsForm.get('receiverName')?.value;
-    // Show a message in the console when a receiver is chosen
-    console.log('=== Receiver selection changed ===');
-    console.log('You chose receiver:', selectedReceiverRaw, 'for unit:', selectedUnitNameRaw);
-    const selectedUnitName = (selectedUnitNameRaw || '').toString().trim().toLowerCase();
-    const selectedReceiver = (selectedReceiverRaw || '').toString().trim().toLowerCase();
-    this.availableItems = [];
-    if (!selectedUnitName || !selectedReceiver) {
-      console.log('DEBUG: No unit or receiver selected');
-      this.returnsForm.patchValue({ items: '', quantity: '' });
+  async onSubmit(): Promise<void> {
+    if (this.returnsForm.invalid) {
+      alert('❌ يرجى ملء جميع الحقول المطلوبة');
       return;
     }
-    // Find all expenses for this unit and receiver (case-insensitive, trimmed)
-    const expenses = this.expenses.filter(e => {
-      const eUnit = (e.unitName?.toString().trim().toLowerCase() || '');
-      const eReceiver = (e.receiver?.toString().trim().toLowerCase() || '');
-      return eUnit === selectedUnitName && eReceiver === selectedReceiver;
-    });
-    const allItems = expenses.flatMap(e => Array.isArray(e.items) ? e.items : []);
-    this.availableItems = allItems.map((i: any) => ({ itemName: i.itemName, quantity: i.quantity }));
-    // Show the items in the console
-    console.log('Available items for this receiver:', this.availableItems);
-    if (this.availableItems.length === 1) {
-      this.returnsForm.patchValue({
-        items: this.availableItems[0].itemName,
-        quantity: this.availableItems[0].quantity
-      });
-      console.log('DEBUG: Auto-selected item:', this.availableItems[0]);
-    } else {
-      this.returnsForm.patchValue({ items: '', quantity: '' });
-      console.log('DEBUG: Multiple or no items, cleared selection');
-    }
-  }
 
-  onItemChange() {
-    // When an item is selected, set its quantity automatically
-    const selectedItemName = (this.returnsForm.get('items')?.value || '').toString().trim().toLowerCase();
-    console.log('DEBUG: onItemChange selectedItemName =', selectedItemName);
-    const selectedItem = this.availableItems.find((i: any) => (i.itemName || '').toString().trim().toLowerCase() === selectedItemName);
-    console.log('DEBUG: onItemChange selectedItem =', selectedItem);
-    if (selectedItem) {
-      this.returnsForm.patchValue({ quantity: selectedItem.quantity });
-      console.log('DEBUG: onItemChange quantity set to', selectedItem.quantity);
-    } else {
-      this.returnsForm.patchValue({ quantity: '' });
-      console.log('DEBUG: onItemChange quantity cleared');
-    }
-  }
-
-  onSubmit(): void {
+    this.isProcessing = true;
     const formData = this.returnsForm.value;
-    const file: File = formData.receipt;
 
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-    if (file && validTypes.includes(file.type)) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64Receipt = reader.result as string;
+    try {
+      const base64Receipt = formData.receipt
+        ? await this.readFileAsBase64(formData.receipt)
+        : null;
 
-        const returnEntry = {
-          unitName: formData.unitName,
-          receiverName: formData.receiverName,
-          receipt: base64Receipt,
-          items: formData.items,
-          quantity: formData.quantity
-        };
+      const matchingExpenses = await firstValueFrom(
+        this.returnsService.getMatchingExpenses(formData.unitName, formData.receiverName, formData.items)
+      );
 
-        this.http.post('http://localhost:3000/returns', returnEntry).subscribe(response => {
-          alert('تم حفظ البيانات بنجاح');
-          this.uploadedFile = base64Receipt;
-          this.returnsForm.reset();
-          this.loadReturns(); // Refresh the returns list
-        }, error => {
-          alert('حدث خطأ أثناء حفظ البيانات');
-          console.error('خطأ أثناء حفظ البيانات:', error);
-        });
-      };
+      if (!matchingExpenses || matchingExpenses.length === 0) {
+        alert('❌ لا توجد مصروفات مطابقة');
+        return;
+      }
 
-      reader.readAsDataURL(file);
-    } else {
-      alert('يرجى إرفاق ملف بصيغة PDF أو صورة (JPG/PNG)');
+      const totalAvailableQty = this.calculateTotalQuantity(matchingExpenses, formData.items);
+      const returnedQty = +formData.quantity;
+
+      if (returnedQty > totalAvailableQty) {
+        alert(`❌ الكمية (${returnedQty}) أكبر من المصروفات المتاحة (${totalAvailableQty})`);
+        return;
+      }
+
+      const batchData = this.prepareBatchData(formData, matchingExpenses, returnedQty, base64Receipt);
+
+     this.returnsService.processReturnBatch(batchData).subscribe({
+  next: () => {
+    alert('✅ تم الإرجاع بنجاح');
+    this.resetForm();
+    this.loadInitialData();
+  },
+  error: (error) => {
+    console.error('Error processing return:', error);
+    alert('❌ حدث خطأ أثناء عملية الإرجاع');
+  },
+  complete: () => {
+    this.isProcessing = false;
+  }
+});
+
+
+    } catch (error) {
+      console.error('Error in onSubmit:', error);
+      alert('❌ حدث خطأ غير متوقع');
+      this.isProcessing = false;
     }
+  }
+
+  private readFileAsBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  private calculateTotalQuantity(expenses: any[], itemName: string): number {
+    return expenses.reduce((total, expense) => {
+      const item = expense.items.find((i: any) => i.itemName === itemName);
+      return total + (item ? item.quantity : 0);
+    }, 0);
+  }
+
+  private prepareBatchData(formData: any, expenses: any[], returnedQty: number, receipt: string | null): any {
+    const expenseUpdates = [];
+    const expenseDeletions = [];
+    let remainingQty = returnedQty;
+
+    for (const expense of expenses) {
+      if (remainingQty <= 0) break;
+
+      const itemIndex = expense.items.findIndex((i: any) => i.itemName === formData.items);
+      if (itemIndex === -1) continue;
+
+      const item = expense.items[itemIndex];
+      const deduct = Math.min(remainingQty, item.quantity);
+
+      item.quantity -= deduct;
+      remainingQty -= deduct;
+
+      if (item.quantity <= 0) {
+        expense.items.splice(itemIndex, 1);
+      }
+
+      if (expense.items.length === 0) {
+        expenseDeletions.push(expense.id);
+      } else {
+        expenseUpdates.push({ id: expense.id, data: expense });
+      }
+    }
+
+    return {
+      returnData: {
+        unitName: formData.unitName,
+        receiverName: formData.receiverName,
+        receipt: receipt,
+        items: formData.items,
+        quantity: returnedQty,
+        disposeReason: formData.reason,
+        date: new Date().toISOString()
+      },
+      expenseUpdates,
+      expenseDeletions
+    };
+  }
+
+  private resetForm(): void {
+    this.returnsForm.reset();
+    this.uploadedFile = null;
+    this.availableItems = [];
+    this.recipients = [];
+  }
+
+  cancelReturn(returnItem: any): void {
+    if (!confirm('هل أنت متأكد من إلغاء هذا الإرجاع؟')) return;
+
+    this.returnsService.cancelReturnBatch({
+      returnId: returnItem.id,
+      expenseData: {
+        unitName: returnItem.unitName,
+        receiverName: returnItem.receiverName,
+        items: [{ itemName: returnItem.items, quantity: returnItem.quantity }]
+      }
+    }).subscribe({
+      next: () => {
+        alert('✅ تم إلغاء الإرجاع');
+        this.loadInitialData();
+      },
+      error: (error) => {
+        console.error('Error canceling return:', error);
+        alert('❌ حدث خطأ أثناء إلغاء الإرجاع');
+      }
+    });
   }
 }

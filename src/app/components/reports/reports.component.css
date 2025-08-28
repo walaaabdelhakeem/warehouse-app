@@ -9,14 +9,27 @@
 }
 .table {
   font-size: 0.98rem;
+
 }
 .table th, .table td {
   vertical-align: middle;
 }
 .table thead th {
-  background: #e9ecef;
+  background: rgba(0,0,0,0.04);
+
+}
+.serial-numbers-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.serial-number-item {
+  display: block;
+  padding: 2px 0;
 }
 .table-responsive {
+  background-color:gray;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 select.form-select, input.form-control {
@@ -25,6 +38,7 @@ select.form-select, input.form-control {
 .btn-outline-primary {
   white-space: nowrap;
 }
+
 @media (max-width: 767px) {
   .table-responsive {
     font-size: 0.92rem;
@@ -34,3 +48,4 @@ select.form-select, input.form-control {
     padding: 0 0.5rem;
   }
 }
+

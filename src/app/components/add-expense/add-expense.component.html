@@ -11,12 +11,25 @@
       </div>
 
       <div class="col-md-6 mb-3">
-        <label for="receiver" class="form-label">المستلم</label>
-        <select id="receiver" class="form-select" formControlName="receiver" required>
-          <option value="">اختر المستلم</option>
-          <option *ngFor="let recipient of recipients" [value]="recipient">{{ recipient }}</option>
-        </select>
-      </div>
+  <label for="receiver" class="form-label">المستلم</label>
+  <select id="receiver" class="form-select" formControlName="receiver" required>
+    <option value="">اختر المستلم</option>
+    <option *ngFor="let recipient of recipients" [value]="recipient">{{ recipient }}</option>
+    <option value="other">اسم مستلم جديد </option>
+  </select>
+</div>
+
+<div *ngIf="addExpenseForm.get('receiver')?.value === 'other'" class="col-md-6 mb-3">
+  <label for="newReceiver" class="form-label">اسم المستلم الجديد</label>
+  <input 
+    type="text" 
+    id="newReceiver" 
+    class="form-control" 
+    formControlName="newReceiver"
+    placeholder="أدخل اسم المستلم الجديد"
+    required
+  >
+</div>
     </div>
 
     <div class="row">
@@ -34,20 +47,25 @@
         <label for="documentNumber" class="form-label">رقم المستند</label>
         <input type="text" id="documentNumber" class="form-control" formControlName="documentNumber" required>
       </div>
+      <div *ngIf="addExpenseForm.get('documentNumber')?.hasError('duplicateDocumentNumber') && addExpenseForm.get('documentNumber')?.touched" class="text-danger">
+  رقم السند مستخدم بالفعل لنموذج صرف. يرجى إدخال رقم فريد.
+</div>
+
     </div>
 
     <div class="row">
-      <div class="col-md-6 mb-3">
-        <label for="date" class="form-label">تاريخ المصروف</label>
-        <input type="date" id="date" class="form-control" formControlName="date" required>
-      </div>
-    </div>
+  <div class="col-md-6 mb-3">
+    <label for="date" class="form-label">تاريخ المصروف</label>
+    <input type="date" id="date" class="form-control arabic-date" 
+           formControlName="date" required>
+  </div>
+</div>
 
     <div class="mb-3">
       <label for="items" class="form-label">العناصر</label>
       <div *ngFor="let item of items.controls; let i = index" [formGroup]="item" class="d-flex align-items-center mb-2">
         <select class="form-select me-2" formControlName="itemName" required>
-          <option value="">اختر العنصر</option>
+          <option value="" >اختر العنصر</option>
           <option *ngFor="let availableItem of availableItems" [value]="availableItem.itemName">{{ availableItem.itemName }}</option>
         </select>
         <input type="number" class="form-control me-2" formControlName="quantity" placeholder="الكمية" required>
@@ -61,7 +79,11 @@
       <input type="file" id="attachment" class="form-control" (change)="handleFileInput($event)" required>
     </div>
 
-    <button type="submit" class="btn btn-primary w-100" [disabled]="addExpenseForm.invalid || (addExpenseForm.get('type')?.value === 'Regular' && !addExpenseForm.get('documentNumber')?.value)">إضافة المصروف</button>
+<button type="submit"
+        class="btn btn-primary w-100"
+        [disabled]="addExpenseForm.invalid || items.length === 0 || (addExpenseForm.get('type')?.value === 'Regular' && !addExpenseForm.get('documentNumber')?.value)">
+  إضافة المصروف
+</button>
   </form>
 
   <h3 class="mt-4 text-primary">المصروفات</h3>
@@ -73,12 +95,12 @@
         <th>المستلم</th>
         <th>النوع</th>
         <th>رقم المستند</th>
-        <th>تاريخ الإضافة</th>
+        <th>التاريخ </th>
         <th>الملف المرفق</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let expense of expenses">
+      <tr *ngFor="let expense of expenses.slice(0,10)">
         <td>{{ expense.unitName }}</td>
         <td>
           <ul>

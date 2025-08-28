@@ -14,9 +14,9 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 export class DashboardComponent implements AfterViewInit, OnInit {
   features = [
     { label: 'إدخال صنف', link: 'item-entry', icon: 'bi bi-plus-square' },
-    { label: 'تعاميد الشراء', link: 'purchase-orders', icon: 'bi bi-cart-plus' },
+    { label: 'اضافة اومر جديدة', link: 'purchase-orders', icon: 'bi bi-cart-plus' },
     { label: 'الوحدات', link: 'units', icon: 'bi bi-diagram-3' },
-    { label: 'الأرصدة الافتتاحية', link: 'opening-balances', icon: 'bi bi-archive' },
+    { label: 'اضافة أرصدة', link: 'opening-balances', icon: 'bi bi-archive' },
     { label: 'الصرف من المستودع', link: 'dispatch', icon: 'bi bi-truck' },
     { label: 'مصروفات الوحدة', link: 'add-expense', icon: 'bi bi-cash-stack' },
     { label: 'مناقلة العهد', link: 'transfer', icon: 'bi bi-arrow-left-right' },
@@ -26,6 +26,8 @@ export class DashboardComponent implements AfterViewInit, OnInit {
     { label: 'تقرير زمنى', link: 'timeline-report', icon: 'bi bi-clock-history' },
     { label: 'بحث عن مستلم', link: 'user-search', icon: 'bi bi-search' },
     { label: 'استعراض العمليات', link: 'operations-view', icon: 'bi bi-list-check' },
+    { label: 'أضافة سجل العهدة', link: 'custodyrecord', icon: 'bi-clipboard-check' },
+    { label: 'استعراض سجل العهدة', link: 'Review-custody', icon: 'bi bi-folder2-open' },
     { label: ' الاعدادات', link: 'admin', icon: 'bi bi-person-gear' }
   ];
 

@@ -3,20 +3,23 @@ body {
 }
 
 .container {
-  max-width: 600px;
+  max-width: 800px;
   margin: auto;
   padding: 20px;
-  background-color: #f9f9f9;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 h2 {
   color: #333;
 }
+form{
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
 
+}
 .form-group {
   margin-bottom: 15px;
+
 }
 
 .form-control {

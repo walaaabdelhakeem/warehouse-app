@@ -1,57 +1,71 @@
 <div class="container mt-4">
-  <div *ngIf="warningMessage" class="alert alert-warning alert-dismissible fade show" role="alert">
+  <div *ngIf="warningMessage"
+    class="alert alert-warning alert-dismissible fade show" role="alert">
     {{ warningMessage }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="warningMessage = ''"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"
+      aria-label="Close" (click)="warningMessage = ''"></button>
   </div>
-  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+  <div *ngIf="successMessage"
+    class="alert alert-success alert-dismissible fade show" role="alert">
     {{ successMessage }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" (click)="successMessage = ''"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"
+      aria-label="Close" (click)="successMessage = ''"></button>
   </div>
   <div class="card">
     <div class="card-header bg-primary text-white">
-      <h4>الأرصدة الافتتاحية</h4>
+      <h4>اضافة أرصدة غير مرتبطة بأوامر </h4>
     </div>
     <div class="card-body">
       <form [formGroup]="balanceForm" (ngSubmit)="saveBalance()" novalidate>
         <div class="form-group mb-3">
           <label for="itemName">الصنف / المادة</label>
-          <select id="itemName" class="form-select" formControlName="itemName" (change)="onItemNameChange()">
-            <option value="">اختر الصنف</option>
-            <option *ngFor="let item of itemsList" [value]="item.itemName">{{ item.itemName }}</option>
+          <select id="itemName" class="form-select" formControlName="itemName"
+            (change)="onItemNameChange()">
+            <option value>اختر الصنف</option>
+            <option *ngFor="let item of itemsList" [value]="item.itemName">{{
+              item.itemName }}</option>
           </select>
-          <div *ngIf="showValidation && balanceForm.get('itemName')?.invalid" class="invalid-feedback d-block">
+          <div *ngIf="showValidation && balanceForm.get('itemName')?.invalid"
+            class="invalid-feedback d-block">
             الصنف / المادة مطلوب.
           </div>
         </div>
         <div class="form-group mb-3">
           <label for="stockNumber">رقم الماده</label>
-          <input type="text" id="stockNumber" class="form-control" formControlName="stockNumber" [ngClass]="{'is-invalid': showValidation && balanceForm.get('stockNumber')?.invalid}" />
-          <div *ngIf="showValidation && balanceForm.get('stockNumber')?.invalid" class="invalid-feedback">
-            <div *ngIf="balanceForm.get('stockNumber')?.errors?.required">رقم الماده مطلوب.</div>
-            <div *ngIf="balanceForm.get('stockNumber')?.errors?.pattern">يجب أن يكون رقمًا فقط.</div>
+          <input type="text" id="stockNumber" class="form-control"
+            formControlName="stockNumber"
+            [ngClass]="{'is-invalid': showValidation && balanceForm.get('stockNumber')?.invalid}" />
+          <div *ngIf="showValidation && balanceForm.get('stockNumber')?.invalid"
+            class="invalid-feedback">
+            <div *ngIf="balanceForm.get('stockNumber')?.errors?.required">رقم
+              الماده مطلوب.</div>
+            <div *ngIf="balanceForm.get('stockNumber')?.errors?.pattern">يجب أن
+              يكون رقمًا فقط.</div>
           </div>
         </div>
         <div class="form-group mb-3">
           <label for="quantityAvailable">الكمية المتوفرة</label>
-          <input type="number" id="quantityAvailable" class="form-control" formControlName="quantityAvailable" [ngClass]="{'is-invalid': showValidation && balanceForm.get('quantityAvailable')?.invalid}" />
-          <div *ngIf="showValidation && balanceForm.get('quantityAvailable')?.invalid" class="invalid-feedback">
+          <input type="number" id="quantityAvailable" class="form-control"
+            formControlName="quantityAvailable"
+            [ngClass]="{'is-invalid': showValidation && balanceForm.get('quantityAvailable')?.invalid}" />
+          <div
+            *ngIf="showValidation && balanceForm.get('quantityAvailable')?.invalid"
+            class="invalid-feedback">
             الكمية المتوفرة يجب أن تكون رقمًا موجبًا.
           </div>
         </div>
         <div class="form-group mb-3">
           <label for="serialNumbers">الأرقام التسلسلية (اختياري)</label>
-          <input type="text" id="serialNumbers" class="form-control" formControlName="serialNumbers" />
-        </div>
-        <div class="form-group mb-3">
-          <label>مرتبط بأمر؟</label>
-          <div class="form-check">
-            <input type="checkbox" id="linkedToOrder" class="form-check-input" formControlName="linkedToOrder" [ngClass]="{'is-invalid': showValidation && balanceForm.get('linkedToOrder')?.invalid}" />
-            <label for="linkedToOrder" class="form-check-label">نعم</label>
-          </div>
-          <div *ngIf="showValidation && balanceForm.get('linkedToOrder')?.invalid" class="invalid-feedback d-block">
-            يجب اختيار إذا كان مرتبطًا بأمر.
+          <div formArrayName="serialNumbers">
+            <div
+              *ngFor="let serialCtrl of balanceForm?.get('serialNumbers')['controls']; let i = index">
+              <input type="text" class="form-control mb-1"
+                [formControlName]="i"
+                placeholder="الرقم التسلسلي {{i + 1}}">
+            </div>
           </div>
         </div>
+        
         <button type="submit" class="btn btn-success w-100">إضافة رصيد</button>
       </form>
     </div>
@@ -65,8 +79,6 @@
           <th>رقم الماده</th>
           <th>اسم العنصر</th>
           <th>الكمية المتوفرة</th>
-          <th>الأرقام التسلسلية</th>
-          <th>مرتبط بأمر</th>
           <!-- <th>الإجراءات</th> -->
         </tr>
       </thead>
@@ -75,8 +87,6 @@
           <td>{{ balance.stockNumber }}</td>
           <td>{{ balance.itemName }}</td>
           <td>{{ balance.quantityAvailable }}</td>
-          <td>{{ balance.serialNumbers }}</td>
-          <td>{{ balance.linkedToOrder ? 'نعم' : 'لا' }}</td>
           <!-- 
           <td>
             <button class="btn btn-danger btn-sm" (click)="deleteBalance(balance.id)">حذف</button>

@@ -7,7 +7,7 @@
         <option *ngFor="let type of operationTypes" [value]="type.key">{{ type.label }}</option>
       </select>
     </div>
-    <div class="col-md-4" *ngIf="selectedType === 'expenses' || selectedType === 'returns' || selectedType === 'disposals'">
+    <div class="col-md-4" *ngIf="selectedType === 'expenses' || selectedType === 'returns' || selectedType === 'disposals'  || selectedType === 'transfer'">
       <label>الوحدة</label>
       <select class="form-select" [(ngModel)]="selectedUnit">
         <option value="">كل الوحدات</option>
@@ -31,31 +31,63 @@
           <th>الوحدة</th>
           <th>المستلم</th>
           <th>الصنف</th>
-          <th>الكمية</th>
           <th>نوع العملية</th>
           <th>رقم المستند</th>
           <th>السند</th>
+          <th>التاريخ</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let e of filteredExpenses">
           <td>{{ e.unitName }}</td>
           <td>{{ e.receiver }}</td>
-          <td>
-            <span *ngFor="let item of e.items; let last = last">
-              {{ item.itemName }}<span *ngIf="!last">، </span>
-            </span>
+          <td >
+            <ul class="text-end">
+            <li *ngFor="let item of e.items">{{ item.itemName }} - الكمية: {{ item.quantity }}</li>
+          </ul>
           </td>
-          <td>
-            <span *ngFor="let item of e.items; let last = last">
-              {{ item.quantity }}<span *ngIf="!last">، </span>
-            </span>
-          </td>
+          
           <td>{{ e.type }}</td>
           <td>{{ e.documentNumber || '-' }}</td>
           <td>
             <a *ngIf="e.attachment" [href]="e.attachment" target="_blank">عرض</a>
             <span *ngIf="!e.attachment">-</span>
+          </td>
+          <td>
+            {{  e.date | date:'dd/MM/yyyy' : '-' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- transfer Table -->
+  <div *ngIf="selectedType === 'transfer'">
+    <table class="table table-bordered table-striped text-center">
+      <thead>
+        <tr>
+          <th>الوحدة</th>
+          <th>اسم المُستلِّم القديم</th> <!-- ✅ العمود الجديد -->
+          <th>اسم المستلم الحالي</th>
+          <th>اسم الصنف</th>
+          <th>الكمية</th>
+          <th> التاريخ</th>
+          <th>السند</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of filteredtransfer">
+          <td>{{ e.unitName }}</td>
+          <td>{{ e.oldReceiver || '-' }}</td> <!-- ✅ عرض المسلم القديم -->
+          <td>{{ e.receiverName || '-' }}</td>
+          <td>{{ e.itemName }}</td>
+          <td>{{ e.quantity }}</td>
+          <td>
+            {{ e.transferDate || e.date ? (e.transferDate || e.date
+            | date:'dd/MM/yyyy') : '-' }}
+          </td>
+          <td>
+            <a *ngIf="e.file" [href]="e.file" target="_blank">عرض</a>
+            <span *ngIf="!e.file">-</span>
           </td>
         </tr>
       </tbody>
@@ -99,7 +131,6 @@
           <th>نوع الإيراد</th>
           <th>رقم الأمر</th>
           <th>الصنف</th>
-          <th>الكمية</th>
           <th>السند</th>
         </tr>
       </thead>
@@ -108,15 +139,16 @@
           <td>{{ o.orderTypeLabel }}</td>
           <td>{{ o.orderNumber }}</td>
           <td>
-            <span *ngFor="let item of o.items; let last = last">
-              {{ item.itemName }}<span *ngIf="!last">، </span>
-            </span>
-          </td>
-          <td>
-            <span *ngFor="let item of o.items; let last = last">
-              {{ item.quantity }}<span *ngIf="!last">، </span>
-            </span>
-          </td>
+            <ul class="list-unstyled mb-0">
+              <li *ngFor="let item of o.items">
+                <span class="fw-bold">
+                  {{ item.itemName }}<ng-container
+                    *ngIf="item.stockNumber && item.stockNumber !== ''"> ({{
+                    item.stockNumber }})</ng-container>
+                </span>
+                - الكمية: {{ item.quantity }}
+              </li>
+            </ul>
           <td>
             <a *ngIf="o.fileName" [href]="o.file" target="_blank">{{ o.fileName }}</a>
             <span *ngIf="!o.fileName">-</span>
@@ -135,7 +167,6 @@
           <th>المستلم</th>
           <th>الصنف</th>
           <th>الكمية</th>
-          <th>سبب الاسقاط</th>
           <th>السند</th>
         </tr>
       </thead>
@@ -145,7 +176,6 @@
           <td>{{ d.receiverName }}</td>
           <td>{{ d.items }}</td>
           <td>{{ d.quantity }}</td>
-          <td>{{ d.disposeReason || '-' }}</td>
           <td>
             <a *ngIf="d.receipt" [href]="d.receipt" target="_blank">عرض</a>
             <span *ngIf="!d.receipt">-</span>

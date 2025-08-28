@@ -6,7 +6,7 @@ import { FormArray } from '@angular/forms';
 
 @Component({
   selector: 'app-add-expense',
-   standalone: true,
+  standalone: true,
   imports: [CommonModule, HttpClientModule, ReactiveFormsModule],
   templateUrl: './add-expense.component.html',
   styleUrls: ['./add-expense.component.css']
@@ -19,6 +19,8 @@ export class AddExpenseComponent implements OnInit {
   recipients: any[] = []; // Added recipients array
   successMessage: string = ''; // Success message property
   errorMessage: string = ''; // Error message property
+  existingDocumentNumbers: string[] = [];
+  customReceiver: string = ''; // إضافة متغير لحفظ اسم المستلم الجديد
 
   constructor(private fb: FormBuilder, private http: HttpClient) {
     this.addExpenseForm = this.fb.group({
@@ -26,8 +28,10 @@ export class AddExpenseComponent implements OnInit {
       items: this.fb.array([]),
       receiver: ['', [Validators.required]],
       type: ['', [Validators.required]],
-      documentNumber: [''], // Made optional
+      documentNumber: ['', [this.documentNumberValidator.bind(this)]],
       attachment: [null, [Validators.required]],
+      newReceiver: [''], // أضف هذا الحقل هنا
+
       date: ['', [Validators.required]] // تاريخ المصروف
     });
   }
@@ -71,26 +75,68 @@ export class AddExpenseComponent implements OnInit {
     this.fetchUnits();
     this.fetchItems();
   }
+  private addNewRecipient(newReceiver: string): void {
+    const selectedUnitName = this.addExpenseForm.get('unitName')?.value;
+    const selectedUnit = this.availableUnits.find(unit => unit.unitName === selectedUnitName);
 
+    if (selectedUnit) {
+      if (!Array.isArray(selectedUnit.recipients)) {
+        selectedUnit.recipients = [];
+      }
+
+      if (!selectedUnit.recipients.includes(newReceiver)) {
+        selectedUnit.recipients.push(newReceiver);
+        this.http.put(`http://localhost:3000/units/${selectedUnit.id}`, selectedUnit).subscribe({
+          next: () => {
+            // تحديث قائمة المستلمين المعروضة
+            this.recipients = [...selectedUnit.recipients];
+          },
+          error: (err) => console.error('Error updating recipients:', err)
+        });
+      }
+    }
+  }
   saveExpense(): void {
     const selectedType = this.addExpenseForm.get('type')?.value;
-    console.log('DEBUG: Selected Type:', selectedType); // Debugging log
+    const selectedReceiver = this.addExpenseForm.get('receiver')?.value;
+
+    // التحقق من اسم المستلم إذا تم اختيار "آخر"
+    if (selectedReceiver === 'other') {
+      const newReceiver = this.addExpenseForm.get('newReceiver')?.value?.trim();
+      if (!newReceiver) {
+        alert('يرجى إدخال اسم المستلم الجديد');
+        return;
+      }
+
+      // إضافة المستلم الجديد إلى الوحدة
+      this.addNewRecipient(newReceiver);
+
+      // تحديث قيمة المستلم في النموذج
+      this.addExpenseForm.get('receiver')?.setValue(newReceiver);
+    }
+
     if (['مناقله', 'نموذج صرف', 'اخرى'].includes(selectedType)) {
+      if (this.items.length === 0) {
+        alert('يرجى إضافة عنصر واحد على الأقل.');
+        return;
+      }
+
       if (this.addExpenseForm.valid) {
         const newExpense = this.addExpenseForm.value;
-        // Use user-selected date in ISO format
         newExpense.date = this.formatDateToISOString(this.addExpenseForm.get('date')?.value);
+
         this.http.post('http://localhost:3000/expenses', newExpense).subscribe({
           next: () => {
-            this.expenses.push(newExpense); // Append new expense to the table
-            this.successMessage = 'تم إضافة المصروف بنجاح'; // Success message
+            this.successMessage = 'تم إضافة المصروف بنجاح';
             this.resetForm();
-            setTimeout(() => this.successMessage = '', 3000); // Clear message after 3 seconds
-          },
+            this.loadExpenses(); // ⬅️ إعادة تحميل المصروفات من الملف
+            setTimeout(() => this.successMessage = '', 3000);
+          }
+          ,
           error: (err) => {
-            this.errorMessage = 'حدث خطأ أثناء إضافة المصروف'; // Error message
-            console.error('Error saving expense to db.json:', err);
-            setTimeout(() => this.errorMessage = '', 3000); // Clear message after 3 seconds
+            this.errorMessage = 'حدث خطأ أثناء إضافة المصروف';
+            console.error('Error saving expense:', err);
+            setTimeout(() => this.errorMessage = '', 3000);
           }
         });
       } else {
@@ -101,16 +147,38 @@ export class AddExpenseComponent implements OnInit {
     }
   }
 
+
   loadExpenses(): void {
     this.http.get<any[]>('http://localhost:3000/expenses').subscribe({
-      next: (data) => this.expenses = data,
+      next: (data) => {
+      // ترتيب من الأحدث للأقدم
+      this.expenses = data.sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+
+      this.existingDocumentNumbers = this.expenses
+        .filter(exp => exp.type === 'نموذج صرف' && exp.documentNumber)
+        .map(exp => exp.documentNumber.toString());
+    },
       error: (err) => console.error('Error loading expenses from db.json:', err)
     });
   }
+  documentNumberValidator(control: AbstractControl): ValidationErrors | null {
+    const selectedType = this.addExpenseForm?.get('type')?.value;
+    const enteredNumber = control.value?.toString().trim();
+
+    if (selectedType === 'نموذج صرف' && this.existingDocumentNumbers.includes(enteredNumber)) {
+      return { duplicateDocumentNumber: true };
+    }
+
+    return null;
+  }
+
 
   resetForm(): void {
     this.addExpenseForm.reset({
       unitName: '',
+      newReceiver: '', 
       items: this.fb.array([]),
       receiver: '',
       type: '',
@@ -123,32 +191,56 @@ export class AddExpenseComponent implements OnInit {
   onUnitChange() {
     const selectedUnitName = this.addExpenseForm.get('unitName')?.value;
     const selectedUnit = this.availableUnits.find(unit => unit.unitName === selectedUnitName);
-    console.log('DEBUG: Selected Unit:', selectedUnit); // Debugging log
-    if (selectedUnit && Array.isArray(selectedUnit.recipients)) {
-      console.log('DEBUG: Recipients:', selectedUnit.recipients); // Debugging log
-      this.recipients = [...selectedUnit.recipients]; // Ensure recipients are correctly populated
-      this.addExpenseForm.get('receiver')?.enable(); // Enable receiver dropdown
+
+    if (selectedUnit) {
+      // التأكد من وجود مصفوفة recipients
+      if (!Array.isArray(selectedUnit.recipients)) {
+        selectedUnit.recipients = [];
+      }
+
+      this.recipients = [...selectedUnit.recipients];
+      this.addExpenseForm.get('receiver')?.enable();
       this.addExpenseForm.get('receiver')?.setValidators([Validators.required]);
       this.addExpenseForm.get('receiver')?.updateValueAndValidity();
     } else {
-      console.log('DEBUG: No valid recipients found for the selected unit.'); // Debugging log
-      this.recipients = []; // Clear recipients if no valid unit is selected
-      this.addExpenseForm.get('receiver')?.disable(); // Disable receiver dropdown
+      this.recipients = [];
+      this.addExpenseForm.get('receiver')?.disable();
       this.addExpenseForm.get('receiver')?.clearValidators();
       this.addExpenseForm.get('receiver')?.updateValueAndValidity();
     }
+
   }
 
   onTypeChange() {
     const selectedType = this.addExpenseForm.get('type')?.value;
-    if (selectedType === 'Regular') {
-      this.addExpenseForm.get('documentNumber')?.enable(); // Enable documentNumber field
-      this.addExpenseForm.get('documentNumber')?.setValidators([Validators.required]);
-      this.addExpenseForm.get('documentNumber')?.updateValueAndValidity();
+    const docControl = this.addExpenseForm.get('documentNumber');
+
+    if (selectedType === 'نموذج صرف') {
+      docControl?.enable();
+      docControl?.setValidators([
+        Validators.required,
+        this.documentNumberValidator.bind(this)
+      ]);
     } else {
-      this.addExpenseForm.get('documentNumber')?.disable(); // Disable documentNumber field
-      this.addExpenseForm.get('documentNumber')?.clearValidators();
-      this.addExpenseForm.get('documentNumber')?.updateValueAndValidity();
+      docControl?.disable();
+      docControl?.clearValidators();
+    }
+
+    docControl?.updateValueAndValidity();
+  }
+
+  async updateOpeningBalancesAfterExpense(items: any[]) {
+    const openingBalances = await this.http.get<any[]>('http://localhost:3000/openingBalances').toPromise();
+
+    for (const item of items) {
+      const matched = openingBalances?.find(b => b.itemName === item.itemName);
+      if (matched) {
+        const updatedBalance = {
+          ...matched,
+          quantityAvailable: Math.max(0, Number(matched.quantityAvailable || 0) - Number(item.quantity || 0))
+        };
+        await this.http.put(`http://localhost:3000/openingBalances/${matched.id}`, updatedBalance).toPromise();
+      }
     }
   }
 

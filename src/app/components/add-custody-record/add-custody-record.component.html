@@ -1,0 +1,55 @@
+<div class="container-fluid p-3" dir="rtl">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8 col-12">
+      <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white text-center">
+          <h5 class="mb-0">إضافة سجل العهدة</h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="custodyForm" (ngSubmit)="onSubmit()" novalidate>
+
+            <!-- ملاحظات -->
+            <div class="mb-3">
+              <label class="form-label">أكتب ملاحظاتك:</label>
+              <textarea 
+                class="form-control" 
+                rows="3"
+                formControlName="notes"
+                [ngClass]="{'is-invalid': submitted && f['notes'].errors}"></textarea>
+              <div *ngIf="submitted && f['notes'].errors" class="invalid-feedback">
+                <div *ngIf="f['notes'].errors['required']">الملاحظات مطلوبة</div>
+                <div *ngIf="f['notes'].errors['maxlength']">يجب ألا تتجاوز الملاحظات 500 حرف</div>
+              </div>
+            </div>
+
+            <!-- التاريخ -->
+            <div class="mb-3 w-50">
+              <label class="form-label">تاريخ السجل:</label>
+              <input 
+                type="date" 
+                class="form-control arabic-date" 
+                formControlName="date"
+                [ngClass]="{'is-invalid': submitted && f['date'].errors}">
+              <div *ngIf="submitted && f['date'].errors" class="invalid-feedback">
+                <div *ngIf="f['date'].errors['required']">التاريخ مطلوب</div>
+              </div>
+            </div>
+
+            <!-- الملف -->
+            <div class="mb-3">
+              <label class="form-label">اضف الملف :</label>
+              <input type="file" class="form-control" (change)="handleFileInput($event)" required>
+              <div *ngIf="submitted && f['file'].errors" class="invalid-feedback">
+                <div *ngIf="f['file'].errors['required']">الملف مطلوب</div>
+              </div>
+            </div>
+
+            <!-- زر الحفظ -->
+            <button type="submit" class="btn btn-success w-100">حفظ السجل</button>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

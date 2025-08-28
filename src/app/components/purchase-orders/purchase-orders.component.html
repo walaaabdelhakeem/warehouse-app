@@ -1,70 +1,95 @@
 <div class="container py-5" dir="rtl">
-  <h2 class="mb-4 text-center">تسجيل تعميد / دعم جديد</h2>
+  <h2 class="mb-4 text-center"> اضافة أومر جديدة( تعميد-أمر شراء-دعم) </h2>
   <form [formGroup]="orderForm" (ngSubmit)="onSubmit()" class="mb-4">
     <div class="row g-3 mb-3">
       <div class="col-md-4">
-        <label for="orderType" class="form-label">نوع التعاميد</label>
-        <select id="orderType" class="form-select" formControlName="orderType" [ngClass]="{'is-invalid': submitted && orderForm.get('orderType')?.invalid}">
-          <option value="">اختر النوع</option>
-          <option *ngFor="let type of orderTypes" [value]="type.value">{{ type.label }}</option>
+        <label for="orderType" class="form-label">نوع الامر</label>
+        <select id="orderType" class="form-select" formControlName="orderType"
+          [ngClass]="{'is-invalid': submitted && orderForm.get('orderType')?.invalid}">
+          <option value>اختر النوع</option>
+          <option *ngFor="let type of orderTypes" [value]="type.value">{{
+            type.label }}</option>
         </select>
-        <div *ngIf="submitted && orderForm.get('orderType')?.invalid" class="text-danger small mt-1">نوع التعاميد مطلوب</div>
+        <div *ngIf="submitted && orderForm.get('orderType')?.invalid"
+          class="text-danger small mt-1">نوع التعاميد مطلوب</div>
       </div>
       <div class="col-md-4">
         <label for="orderNumber" class="form-label">رقمه </label>
-        <input id="orderNumber" type="text" class="form-control" formControlName="orderNumber" [ngClass]="{'is-invalid': submitted && orderForm.get('orderNumber')?.invalid}">
-        <div *ngIf="submitted && orderForm.get('orderNumber')?.invalid" class="text-danger small mt-1">رقم التعاميد مطلوب</div>
+        <input id="orderNumber" type="text" class="form-control"
+          formControlName="orderNumber"
+          [ngClass]="{'is-invalid': submitted && orderForm.get('orderNumber')?.invalid}">
+        <div *ngIf="submitted && orderForm.get('orderNumber')?.invalid"
+          class="text-danger small mt-1">رقم التعاميد مطلوب</div>
       </div>
     </div>
     <div class="row g-3 mb-3">
       <div class="col-md-4">
         <label class="form-label">إرفاق صورة أو PDF</label>
-        <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*,application/pdf">
+        <input type="file" class="form-control"
+          (change)="onFileSelected($event)" accept="image/*,application/pdf">
       </div>
     </div>
     <div class="row g-3 mb-3">
       <div class="col-md-4">
         <label for="supplierName" class="form-label">اسم المورد</label>
-        <input id="supplierName" type="text" class="form-control" formControlName="supplierName" [ngClass]="{'is-invalid': submitted && orderForm.get('supplierName')?.invalid}">
-        <div *ngIf="submitted && orderForm.get('supplierName')?.invalid" class="text-danger small mt-1">اسم المورد مطلوب</div>
+        <input id="supplierName" type="text" class="form-control"
+          formControlName="supplierName"
+          [ngClass]="{'is-invalid': submitted && orderForm.get('supplierName')?.invalid}">
+        <div *ngIf="submitted && orderForm.get('supplierName')?.invalid"
+          class="text-danger small mt-1">اسم المورد مطلوب</div>
       </div>
     </div>
     <div class="row g-3 mb-3">
       <div class="col-md-4">
-        <label for="date" class="form-label">تاريخ التعاميد</label>
-        <input id="date" type="date" class="form-control" formControlName="date" [ngClass]="{'is-invalid': submitted && orderForm.get('date')?.invalid}">
-        <div *ngIf="submitted && orderForm.get('date')?.invalid" class="text-danger small mt-1">تاريخ التعاميد مطلوب</div>
+        <label for="date" class="form-label">تاريخه</label>
+        <input id="date" type="date" class="form-control arabic-date" formControlName="date" placeholder="اليوم /الشهر /السنه" 
+          [ngClass]="{'is-invalid': submitted && orderForm.get('date')?.invalid}">
+        <div *ngIf="submitted && orderForm.get('date')?.invalid"
+          class="text-danger small mt-1 ">تاريخ التعاميد مطلوب</div>
       </div>
     </div>
-    <h5 class="mt-4 mb-3">الأصناف في التعاميد</h5>
+    <h5 class="mt-4 mb-3">الأصناف </h5>
     <div formArrayName="items">
-      <div *ngFor="let item of items.controls; let i = index" [formGroupName]="i" class="row g-3 align-items-end mb-2 border rounded p-3 bg-light">
+      <div *ngFor="let item of items.controls; let i = index"
+        [formGroupName]="i"
+        class="row g-3 align-items-end mb-2 border rounded p-3 bg-light">
         <div class="col-md-3">
           <label class="form-label">اسم الصنف</label>
-          <select class="form-select" formControlName="itemName" (change)="onItemNameChange(item)">
-            <option value="">اختر الصنف</option>
-            <option *ngFor="let dbItem of itemsList" [value]="dbItem.itemName">{{ dbItem.itemName }}</option>
+          <select class="form-select" formControlName="itemName"
+            (change)="onItemNameChange(item)">
+            <option value>اختر الصنف</option>
+            <option *ngFor="let dbItem of itemsList"
+              [value]="dbItem.itemName">{{ dbItem.itemName }}</option>
           </select>
-          <div *ngIf="submitted && item.get('itemName')?.invalid" class="text-danger small mt-1">اسم الصنف مطلوب</div>
+          <div *ngIf="submitted && item.get('itemName')?.invalid"
+            class="text-danger small mt-1">اسم الصنف مطلوب</div>
         </div>
         <div class="col-md-2">
           <label class="form-label">رقم الصنف</label>
-          <input type="text" class="form-control" formControlName="stockNumber" [readonly]="true">
-          <div *ngIf="submitted && item.get('stockNumber')?.invalid" class="text-danger small mt-1">رقم الصنف مطلوب</div>
+          <input type="text" class="form-control" formControlName="stockNumber"
+            [readonly]="true">
+          <div *ngIf="submitted && item.get('stockNumber')?.invalid"
+            class="text-danger small mt-1">رقم الصنف مطلوب</div>
         </div>
         <div class="col-md-2">
           <label class="form-label">الكمية</label>
-          <input type="number" min="1" class="form-control" formControlName="quantity" (input)="onQuantityChange(item)">
-          <div *ngIf="submitted && item.get('quantity')?.invalid" class="text-danger small mt-1">الكمية مطلوبة ويجب أن تكون رقمًا موجبًا</div>
+          <input type="number" min="1" class="form-control"
+            formControlName="quantity" (input)="onQuantityChange(item)">
+          <div *ngIf="submitted && item.get('quantity')?.invalid"
+            class="text-danger small mt-1">الكمية مطلوبة ويجب أن تكون رقمًا
+            موجبًا</div>
         </div>
         <div class="col-md-3">
           <label class="form-label">الأرقام التسلسلية</label>
-          <div *ngFor="let serialCtrl of getSerialNumbers(item).controls; let si = index">
-            <input type="text" class="form-control mb-1" [formControl]="serialCtrl" placeholder="رقم تسلسلي {{si+1}}">
+          <div
+            *ngFor="let serialCtrl of getSerialNumbers(item).controls; let si = index">
+            <input type="text" class="form-control mb-1"
+              [formControl]="serialCtrl" placeholder="رقم تسلسلي {{si+1}}">
           </div>
         </div>
         <div class="col-md-2 d-flex align-items-end">
-          <button type="button" class="btn btn-danger w-100" (click)="removeItem(i)" *ngIf="items.length > 1">
+          <button type="button" class="btn btn-danger w-100"
+            (click)="removeItem(i)" *ngIf="items.length > 1">
             <i class="bi bi-trash"></i> حذف
           </button>
         </div>
@@ -75,40 +100,44 @@
         <i class="bi bi-plus-circle"></i> إضافة صنف آخر
       </button>
     </div>
-    <button class="btn btn-success mt-4 w-100 fs-5" type="submit"> اضافه</button>
+    <button class="btn btn-success mt-4 w-100 fs-5" type="submit">
+      اضافه</button>
   </form>
 
-  <h4 class="mb-3">سجل التعاميد</h4>
+  <h4 class="mb-3">السجل</h4>
   <div class="table-responsive">
     <table class="table table-bordered table-striped text-center align-middle">
       <thead class="table-light">
         <tr>
-          <th>اسم التعاميد</th>
-          <th>رقم التعاميد</th>
-          <th>اسم المورد</th>
-          <th>عدد الأصناف</th>
-          <th>تاريخ الإضافة</th>
-          <th>تفاصيل الأصناف</th>
+          <th> نوع الامر</th>
+          <th>رقمه </th>
+          <th>توريد</th>
+          
+          <th> تاريخه</th>
+          <th> التفاصيل والمرفقات</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let order of orders">
+        <tr *ngFor="let order of orders.slice(0,5)">
           <td>{{ getOrderTypeLabel(order.orderType) }}</td>
           <td>{{ order.orderNumber }}</td>
           <td>{{ order.supplierName }}</td>
-          <td>{{ order.items.length }}</td>
-          <td>{{ order.date ? (order.date | date:'yyyy/MM/dd') : '-' }}</td>
+          
+          <td>{{ order.date ? (order.date | date:'dd/MM/yyyy') : '-' }}</td>
           <td>
             <ul class="list-unstyled mb-0">
               <li *ngFor="let item of order.items">
                 <span class="fw-bold">
-                  {{ item.itemName }}<ng-container *ngIf="item.stockNumber && item.stockNumber !== ''"> ({{ item.stockNumber }})</ng-container>
+                  {{ item.itemName }}<ng-container
+                    *ngIf="item.stockNumber && item.stockNumber !== ''"> ({{
+                    item.stockNumber }})</ng-container>
                 </span>
                 - الكمية: {{ item.quantity }}
               </li>
             </ul>
             <div *ngIf="order.file && order.fileName">
-              <a [href]="order.file" target="_blank">عرض المرفق: {{ order.fileName }}</a>
+              <a [href]="order.file" target="_blank">عرض المرفق: {{
+                order.fileName }}</a>
             </div>
           </td>
         </tr>

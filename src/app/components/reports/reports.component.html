@@ -2,56 +2,72 @@
   <!-- Report type dropdown -->
   <div class="row mb-3">
     <div class="col-12 col-md-3 mb-2">
-      <select class="form-select" [(ngModel)]="selectedReport" (change)="onReportChange()">
-        <option *ngFor="let type of reportTypes" [value]="type.key">{{ type.label }}</option>
+      <select class="form-select" [(ngModel)]="selectedReport"
+        (change)="onReportChange()">
+        <option *ngFor="let type of reportTypes" [value]="type.key">{{
+          type.label }}</option>
       </select>
     </div>
   </div>
 
   <!-- Expense Type Trigger -->
   <div class="mb-4" *ngIf="showExpenseTypeButtons">
-    <input type="text" class="form-control" placeholder="Expenses by Order" (focus)="onExpenseTypeInputClick()" readonly>
+    <input type="text" class="form-control" placeholder="Expenses by Order"
+      (focus)="onExpenseTypeInputClick()" readonly>
     <div *ngIf="showExpenseTypeOptions" class="mt-2">
-      <button class="btn btn-outline-primary me-2" (click)="selectExpenseType('Support')">تقرير الإيرادات حسب أوامر الشراء</button>
-      <button class="btn btn-outline-primary me-2" (click)="selectExpenseType('Order')">تقرير الإيرادات حسب التعاميد</button>
-      <button class="btn btn-outline-primary" (click)="selectExpenseType('Other')">تقرير الإيرادات حسب الدعم</button>
+      <button class="btn btn-outline-primary me-2"
+        (click)="selectExpenseType('Support')">تقرير الإيرادات حسب أوامر
+        الشراء</button>
+      <button class="btn btn-outline-primary me-2"
+        (click)="selectExpenseType('Order')">تقرير الإيرادات حسب
+        التعاميد</button>
+      <button class="btn btn-outline-primary"
+        (click)="selectExpenseType('Other')">تقرير الإيرادات حسب الدعم</button>
     </div>
   </div>
 
   <!-- Report Title -->
   <div *ngIf="reportExpenseType && reportExpenseData.length > 0" class="mb-4">
     <h5 class="mb-3">
-      <span *ngIf="reportExpenseType==='Support'">تقرير المصروفات حسب أوامر الشراء</span>
-      <span *ngIf="reportExpenseType==='Order'">تقرير المصروفات حسب التعاميد</span>
+      <span *ngIf="reportExpenseType==='Support'">تقرير المصروفات حسب أوامر
+        الشراء</span>
+      <span *ngIf="reportExpenseType==='Order'">تقرير المصروفات حسب
+        التعاميد</span>
       <span *ngIf="reportExpenseType==='Other'">تقرير المصروفات حسب الدعم</span>
     </h5>
   </div>
 
-  <div class="table-responsive bg-white rounded shadow-sm p-3" id="report-table">
+  <div class="table-responsive bg-white rounded shadow-sm p-3"
+    id="report-table">
     <button class="btn btn-success mb-3" (click)="exportToPDF()">
       <i class="bi bi-file-earmark-pdf"></i> استخراج PDF
     </button>
 
     <!-- مصروفات الوحده -->
-    <div *ngIf="selectedReport === 'detailedOrderExpense' && showUnitExpensesTable" class="mb-4">
+    <div
+      *ngIf="selectedReport === 'detailedOrderExpense' && showUnitExpensesTable"
+      class="mb-4">
       <div class="mb-3">
         <label for="unitSelect" class="form-label">اختر الوحدة:</label>
-        <select id="unitSelect" class="form-select w-auto d-inline-block" [(ngModel)]="filter.unit" (change)="onUnitChange()">
-          <option value="">-- اختر --</option>
-          <option *ngFor="let unit of unitsWithData" [value]="unit.unitName">{{ unit.unitName }}</option>
+        <select id="unitSelect" class="form-select w-auto d-inline-block"
+          [(ngModel)]="filter.unit" (change)="onUnitChange()">
+          <option value>-- اختر --</option>
+          <option *ngFor="let unit of unitsWithData" [value]="unit.unitName">{{
+            unit.unitName }}</option>
         </select>
       </div>
 
       <table class="table table-bordered table-striped text-center mb-4">
         <thead>
           <tr>
-            <th colspan="4" style="text-align:center; font-size: 1.3rem;">الخلاصه</th>
+            <th colspan="4"
+              style="text-align:center; font-size: 1.3rem;">الخلاصه</th>
           </tr>
           <tr>
-            <th>اسم الصنف</th>
+            <th> المادة/الصنف</th>
             <th>الكميه المستلمه</th>
-            <th>الكميه المرتجعه</th>
-            <th>الفعلي</th>
+            <th> الارجاع</th>
+            <th>(الفعلي) المتبقي</th>
           </tr>
         </thead>
         <tbody>
@@ -69,7 +85,9 @@
     </div>
 
     <!-- مصروفات حسب الأمر -->
-    <table *ngIf="selectedReport === 'expensesByOrder' && reportExpenseType && reportExpenseData.length > 0" class="table table-bordered table-striped text-center mb-4">
+    <table
+      *ngIf="selectedReport === 'expensesByOrder' && reportExpenseType && reportExpenseData.length > 0"
+      class="table table-bordered table-striped text-center mb-4">
       <thead>
         <tr>
           <th>نوع الأمر</th>
@@ -93,7 +111,9 @@
     </table>
 
     <!-- All other reports -->
-    <table *ngIf="filteredData.length > 0 && selectedReport !== 'expensesByOrder'" class="table table-bordered table-striped text-center">
+    <table
+      *ngIf="filteredData.length > 0 && selectedReport !== 'expensesByOrder'"
+      class="table table-bordered table-striped text-center">
       <thead>
         <tr>
           <th *ngFor="let col of getCurrentColumns()">{{ col.label }}</th>
@@ -101,20 +121,41 @@
       </thead>
       <tbody>
         <tr *ngFor="let row of filteredData">
+          <!-- في جزء عرض البيانات -->
           <td *ngFor="let col of getCurrentColumns()">
-            <ng-container *ngIf="selectedReport === 'receiverAssets' && col.key === 'assets'; else serialCell">
+            <ng-container
+              *ngIf="selectedReport === 'receiverAssets' && col.key === 'assets'; else serialCell">
               {{ row[col.key] }}
             </ng-container>
+
             <ng-template #serialCell>
-              <ng-container *ngIf="selectedReport === 'remainingStock' && col.key === 'serialNumbers'; else disposalCell">
-                <span *ngFor="let sn of (row[col.key] ? row[col.key].split(',') : [])">{{ sn.trim() }}<br></span>
-              </ng-container>
-              <ng-template #disposalCell>
-                <ng-container *ngIf="selectedReport === 'returnedItems' && col.key === 'disposed'; else defaultCell">
-                  {{ row.disposed ? 'نعم' : 'لا' }}
+              <ng-container
+                *ngIf="selectedReport === 'remainingStock' && col.key === 'serialNumbers'; else disposalCell">
+                <ng-container
+                  *ngIf="row[col.key] !== null && row[col.key] !== undefined">
+                  <div *ngIf="typeof row[col.key] === 'string'; else arrayView">
+                    <div *ngFor="let sn of row[col.key].split(',')"
+                      class="serial-number-item">
+                      {{ sn.trim() }}
+                    </div>
+                  </div>
+                  <ng-template #arrayView>
+                    <div *ngFor="let sn of row[col.key]"
+                      class="serial-number-item">
+                      {{ sn }}
+                    </div>
+                  </ng-template>
                 </ng-container>
+              </ng-container>
+
+              <ng-template #disposalCell>
+                <ng-container
+                  *ngIf="selectedReport === 'returnedItems' && col.key === 'disposed'; else defaultCell">
+                  {{ row.disposed || '0' }}
+                </ng-container>
+
                 <ng-template #defaultCell>
-                  {{ row[col.key] || '-' }}
+                  {{ row[col.key] || '0' }}
                 </ng-template>
               </ng-template>
             </ng-template>
@@ -123,65 +164,124 @@
       </tbody>
     </table>
 
-    <div *ngIf="filteredData.length === 0 && selectedReport !== 'detailedOrderExpense'" class="text-center text-muted py-4">
+    <div
+      *ngIf="filteredData.length === 0 && selectedReport !== 'detailedOrderExpense'"
+      class="text-center text-muted py-4">
       لا توجد بيانات مطابقة للفلتر الحالي.
     </div>
 
     <!-- تقرير المستلم والعهدة -->
     <div *ngIf="selectedReport === 'receiverAssets'">
-      <div class="mb-3">
+      <div class="row mb-3">
+        <div class="col-3">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="searchMethod"
+              id="byUnit" value="byUnit" [(ngModel)]="searchMethod">
+            <label class="form-check-label" for="byUnit">
+              البحث بالوحدة
+            </label>
+          </div>
+          <div *ngIf="searchMethod === 'byUnit'" class="mt-2">
+            <label for="unitSelect" class="form-label">اختر الوحدة:</label>
+            <select id="unitSelect" class="form-select"
+              [(ngModel)]="selectedUnit" name="selectedUnit"
+              (change)="loadReceiversForUnit()">
+              <option value>-- اختر الوحدة --</option>
+              <option *ngFor="let unit of getUnitsWithReceivers()"
+                [value]="unit.unitName">{{ unit.unitName }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="col-3">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="searchMethod"
+              id="byReceiver" value="byReceiver" [(ngModel)]="searchMethod">
+            <label class="form-check-label" for="byReceiver">
+              البحث بالمستلم مباشرة
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- اختيار المستلم -->
+      <div class="mb-3 col-3"
+        *ngIf="(searchMethod === 'byUnit' && selectedUnit) || searchMethod === 'byReceiver'">
         <label for="receiverSelect" class="form-label">اختر المستلم:</label>
-        <select id="receiverSelect" class="form-select w-auto d-inline-block" [(ngModel)]="selectedReceiver" (change)="onReceiverChange(selectedReceiver)">
-          <option value="">-- اختر --</option>
-          <option *ngFor="let name of getUniqueReceiversFromDispatches()" [value]="name">{{ name }}</option>
+        <select id="receiverSelect" class="form-select"
+          [(ngModel)]="selectedReceiver" name="selectedReceiver"
+          (change)="generateReceiverAssetsReport()">
+          <option value>-- اختر المستلم --</option>
+
+          <ng-container *ngIf="searchMethod === 'byUnit'">
+            <option *ngFor="let receiver of getReceiversForSelectedUnit()"
+              [value]="receiver">{{ receiver }}</option>
+          </ng-container>
+
+          <ng-container *ngIf="searchMethod === 'byReceiver'">
+            <option *ngFor="let receiver of getUniqueReceiversFromExpenses()"
+              [value]="receiver">{{ receiver }}</option>
+          </ng-container>
         </select>
       </div>
 
-      <table class="table table-bordered table-striped text-center mb-4" *ngIf="receiverAssetsSummary.length">
-        <thead>
-          <tr>
-            <th colspan="4" style="text-align:center; font-size: 1.3rem;">الخلاصه</th>
-          </tr>
-          <tr>
-            <th>الصنف / المادة</th>
-            <th>الكمية المستلمه</th>
-            <th>الارجاع</th>
-            <th>المتبقي</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let row of receiverAssetsSummary">
-            <td>{{ row.itemName }}</td>
-            <td>{{ row.received }}</td>
-            <td>{{ row.returned }}</td>
-            <td>{{ row.remaining }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- عرض النتائج -->
+      <div *ngIf="selectedReceiver">
+        <table class="table table-bordered table-striped text-center mb-4"
+          *ngIf="receiverAssetsSummary.length">
+          <thead>
+            <tr>
+              <th colspan="4"
+                style="text-align:center; font-size: 1.3rem;">الخلاصه</th>
+            </tr>
+            <tr>
+              <th>الصنف / المادة</th>
+              <th>الكمية المستلمه</th>
+              <th>الارجاع</th>
+              <th> (الفعلي) المتبقي</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of receiverAssetsSummary">
+              <td>{{ row.itemName }}</td>
+              <td>{{ row.received }}</td>
+              <td>{{ row.returned }}</td>
+              <td>{{ row.remaining }}</td>
+            </tr>
+          </tbody>
+        </table>
 
-      <table class="table table-bordered table-striped text-center mb-4" *ngIf="receiverAssetsDetails.length">
-        <thead>
-          <tr>
-            <th colspan="3" style="text-align:center; font-size: 1.1rem;">تفاصيل المصروفات</th>
-          </tr>
-          <tr>
-            <th>الصنف / المادة</th>
-            <th>الكمية</th>
-            <th>رقم السند</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let row of receiverAssetsDetails">
-            <td>{{ row.itemName }}</td>
-            <td>{{ row.quantity }}</td>
-            <td>{{ row.receiptNumber }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div *ngIf="!receiverAssetsSummary.length && !receiverAssetsDetails.length" class="text-center text-muted py-4">
-        لا توجد بيانات لهذا المستلم.
+        <table class="table table-bordered table-striped text-center mb-4"
+          *ngIf="receiverAssetsDetails.length">
+          <thead>
+            <tr>
+              <th colspan="4"
+                style="text-align:center; font-size: 1.1rem;">تفاصيل
+                المصروفات</th>
+            </tr>
+            <tr>
+              <th>الصنف / المادة</th>
+              <th>الكمية</th>
+              <th>رقم السند</th>
+              <th> تاريخه</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of receiverAssetsDetails">
+              <td>{{ row.itemName }}</td>
+              <td>{{ row.quantity }}</td>
+              <td>{{ row.receiptNumber }}</td>
+              <td>{{ row.date }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+
+      <div
+        *ngIf="searchMethod === 'byUnit' && selectedUnit && getReceiversForSelectedUnit().length === 0"
+        class="alert alert-info">
+        لا يوجد مستلمين مسجلين لهذه الوحدة.
+      </div>
+
     </div>
   </div>
-</div>

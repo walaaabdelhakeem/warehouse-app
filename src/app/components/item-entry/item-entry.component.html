@@ -4,20 +4,20 @@
     <div class="row g-3 align-items-end">
       <div class="col-md-6">
         <label for="itemName" class="form-label">اسم الصنف</label>
-        <input id="itemName" type="text" class="form-control" formControlName="itemName" [ngClass]="{'is-invalid': (f.itemName.touched || submitted) && f.itemName.invalid}">
-        <div *ngIf="(f.itemName.touched || submitted) && f.itemName.invalid" class="text-danger small mt-1">
-          <div *ngIf="f.itemName.errors?.required">اسم الصنف مطلوب</div>
-          <div *ngIf="f.itemName.errors?.minlength">الحد الأدنى 2 حرف</div>
-          <div *ngIf="f.itemName.errors?.maxlength">الحد الأقصى 50 حرفًا</div>
+        <input id="itemName" type="text" class="form-control" formControlName="itemName" [ngClass]="{'is-invalid': (f['itemName'].touched || submitted) && f['itemName'].invalid}">
+        <div *ngIf="(f['itemName'].touched || submitted) && f['itemName'].invalid" class="text-danger small mt-1">
+          <div *ngIf="f['itemName'].errors?.['required']">اسم الصنف مطلوب</div>
+          <div *ngIf="f['itemName'].errors?.['minlength']">الحد الأدنى 2 حرف</div>
+          <div *ngIf="f['itemName'].errors?.['maxlength']">الحد الأقصى 50 حرفًا</div>
         </div>
       </div>
       <div class="col-md-6">
         <label for="stockNumber" class="form-label">رقم الماده</label>
-        <input id="stockNumber" type="text" class="form-control" formControlName="stockNumber" [ngClass]="{'is-invalid': (f.stockNumber.touched || submitted) && f.stockNumber.invalid}">
-        <div *ngIf="(f.stockNumber.touched || submitted) && f.stockNumber.invalid" class="text-danger small mt-1">
-          <div *ngIf="f.stockNumber.errors?.required">رقم الصنف مطلوب</div>
-          <div *ngIf="f.stockNumber.errors?.pattern">يجب أن يكون رقمًا فقط</div>
-          <div *ngIf="f.stockNumber.errors?.duplicate">رقم الصنف مستخدم بالفعل</div>
+        <input id="stockNumber" type="text" class="form-control" formControlName="stockNumber" [ngClass]="{'is-invalid': (f['stockNumber'].touched || submitted) && f['stockNumber'].invalid}">
+        <div *ngIf="(f['stockNumber'].touched || submitted) && f['stockNumber'].invalid" class="text-danger small mt-1">
+          <div *ngIf="f['stockNumber'].errors?.['required']">رقم الصنف مطلوب</div>
+          <div *ngIf="f['stockNumber'].errors?.['pattern']">يجب أن يكون رقمًا فقط</div>
+          <div *ngIf="f['stockNumber'].errors?.['duplicate']">رقم الصنف مستخدم بالفعل</div>
         </div>
       </div>
     </div>

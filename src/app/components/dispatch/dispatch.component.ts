@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class DispatchComponent implements OnInit {
   dispatchForm: FormGroup;
+  usedSerialNumbers: string[] = [];
   units: any[] = [];
   itemsList: any[] = [];
   openingBalances: any[] = [];
@@ -26,6 +27,7 @@ export class DispatchComponent implements OnInit {
   itemsRows: any[] = [
     { itemName: '', stockNumber: '', quantity: 1, serialNumbers: [] }
   ];
+  customReceiver: string = '';
 
   constructor(private fb: FormBuilder, private http: HttpClient) {
     this.dispatchForm = this.fb.group({
@@ -52,17 +54,39 @@ export class DispatchComponent implements OnInit {
   }
 
   loadOpeningBalances() {
-    this.http.get<any[]>('http://localhost:3000/openingBalances').subscribe(data => this.openingBalances = data);
+    this.http.get<any[]>('http://localhost:3000/openingBalances')
+      .subscribe(data => {
+        this.openingBalances = (data || []).map(b => ({
+          ...b,
+          serialNumbers: this.normalizeSerialArray(b.serialNumbers)
+        }));
+      });
   }
 
-  loadDispatches() {
-    this.http.get<any[]>('http://localhost:3000/dispatches').subscribe(data => this.dispatches = data);
+  loadDispatches(): void {
+    this.http.get<any[]>('http://localhost:3000/dispatches').subscribe({
+      next: (data) => {
+        this.dispatches = data
+        // 🆕 ممنوع تكرار سيريالات اتصرفت قبل كده
+        this.usedSerialNumbers = data.flatMap(d =>
+          this.normalizeSerialArray(d.serialNumber || d.serialNumbers)
+        );
+      },
+      error: (err) => console.error('Error loading dispatches:', err)
+    });
   }
+
 
   onStockNumberChange() {
     const stockNumber = this.dispatchForm.get('stockNumber')?.value;
     const item = this.itemsList.find(i => i.stockNumber === stockNumber);
     this.dispatchForm.get('itemName')?.setValue(item ? item.itemName : '');
+  }
+  onReceiverChange(event: any) {
+    const selected = event.target.value;
+    if (selected !== 'other') {
+      this.customReceiver = '';
+    }
   }
 
   onItemNameChange() {
@@ -79,24 +103,95 @@ export class DispatchComponent implements OnInit {
   }
 
   onUnitNameChange(event: any) {
-    const selectedUnitName = event?.target?.value || ''; // Safely access event.target.value
-    console.log('DEBUG: Selected Unit Name:', selectedUnitName); // Debugging log
-    console.log('DEBUG: Units Array:', this.units); // Debugging log
+    const selectedUnitName = event?.target?.value || '';
     const selectedUnit = this.units.find(unit => unit.unitName === selectedUnitName);
-    console.log('DEBUG: Selected Unit:', selectedUnit); // Debugging log
-    if (selectedUnit && Array.isArray(selectedUnit.recipients)) {
-      console.log('DEBUG: Recipients:', selectedUnit.recipients); // Debugging log
-      this.recipients = [...selectedUnit.recipients]; // Ensure recipients are correctly populated
-      this.dispatchForm.get('receiverName')?.enable(); // Enable receiverName dropdown
+
+    if (selectedUnit) {
+      // التأكد من وجود مصفوفة recipients
+      if (!Array.isArray(selectedUnit.recipients)) {
+        selectedUnit.recipients = [];
+      }
+
+      this.recipients = [...selectedUnit.recipients];
+      this.dispatchForm.get('receiverName')?.enable();
       this.dispatchForm.get('receiverName')?.setValidators([Validators.required]);
       this.dispatchForm.get('receiverName')?.updateValueAndValidity();
     } else {
-      console.log('DEBUG: No valid recipients found for the selected unit.'); // Debugging log
-      this.recipients = []; // Clear recipients if no valid unit is selected
-      this.dispatchForm.get('receiverName')?.disable(); // Disable receiverName dropdown
+      this.recipients = [];
+      this.dispatchForm.get('receiverName')?.disable();
       this.dispatchForm.get('receiverName')?.clearValidators();
       this.dispatchForm.get('receiverName')?.updateValueAndValidity();
     }
+  }
+  private async depleteBalancesByRow(row: any): Promise<void> {
+    // السيريالات المطلوب خصمها
+    const serialsToRemove = new Set((row.serialNumbers || []).map((s: any) => String(s)));
+
+    // كل الأرصدة لنفس الصنف/الستوك نمبر
+    const balances = this.openingBalances.filter(
+      b => b.itemName === row.itemName &&
+        String(b.stockNumber).trim() === String(row.stockNumber).trim()
+    );
+
+    let remainingQty = Number(row.quantity) || 0;
+
+    // 2.1 خصم بالسيريالات (دقيق)
+    if (serialsToRemove.size > 0) {
+      for (const b of balances) {
+        const balSerials = this.normalizeSerialArray(b.serialNumbers);
+        const keep = balSerials.filter(sn => !serialsToRemove.has(String(sn)));
+        const removedCount = balSerials.length - keep.length;
+
+        if (removedCount > 0) {
+          const updated = {
+            ...b,
+            serialNumbers: keep,
+            // الكمية = القديمة - اللي اتمسح
+            quantityAvailable: Math.max(0, Number(b.quantityAvailable || balSerials.length) - removedCount)
+          };
+
+          await this.http.put(`http://localhost:3000/openingBalances/${b.id}`, updated).toPromise();
+
+          // حدّث محليًا
+          const idx = this.openingBalances.findIndex(x => x.id === b.id);
+          if (idx > -1) this.openingBalances[idx] = updated;
+
+          // نضّف من مجموعة السيريالات المطلوبة
+          for (const sn of balSerials) {
+            const s = String(sn);
+            if (serialsToRemove.has(s)) serialsToRemove.delete(s);
+          }
+
+          remainingQty -= removedCount;
+          if (remainingQty <= 0 || serialsToRemove.size === 0) break;
+        }
+      }
+    }
+
+    // 2.2 لو لسه في كمية من غير سيريالات (أصناف غير مُسلسلة) → FIFO
+    if (remainingQty > 0) {
+      for (const b of balances) {
+        if (remainingQty <= 0) break;
+        const canTake = Math.min(remainingQty, Number(b.quantityAvailable || 0));
+        if (canTake <= 0) continue;
+
+        // لو الصنف غير مسلسَل، سيب السيريالات كما هي، واطرح الكمية
+        const updated = {
+          ...b,
+          quantityAvailable: Number(b.quantityAvailable || 0) - canTake,
+          serialNumbers: this.normalizeSerialArray(b.serialNumbers) // بدون تعديل
+        };
+
+        await this.http.put(`http://localhost:3000/openingBalances/${b.id}`, updated).toPromise();
+        const idx = this.openingBalances.findIndex(x => x.id === b.id);
+        if (idx > -1) this.openingBalances[idx] = updated;
+
+        remainingQty -= canTake;
+      }
+    }
+
+    // للتأكد إن الـ UI ياخد آخر نسخة
+    this.openingBalances = [...this.openingBalances];
   }
 
   addItemRow() {
@@ -111,22 +206,44 @@ export class DispatchComponent implements OnInit {
 
   getSerialNumbersForRow(row: any): string[] {
     if (!row.itemName) return [];
-    const ob = this.openingBalances.find(b => b.itemName === row.itemName);
-    if (!ob || !ob.serialNumbers) return [];
-    return typeof ob.serialNumbers === 'string' ? ob.serialNumbers.split(',').map((s: string) => s.trim()) : ob.serialNumbers;
+    const balances = this.openingBalances.filter(b => b.itemName === row.itemName);
+    return balances.flatMap(b =>
+      typeof b.serialNumbers === 'string'
+        ? b.serialNumbers.split(',').map((s: string) => s.trim())
+        : (b.serialNumbers || []).map((s: any) => String(s))
+    );
   }
+
 
   onItemNameChangeRow(row: any) {
     const item = this.itemsList.find(i => i.itemName === row.itemName);
     row.stockNumber = item ? item.stockNumber : '';
-    // Reset serialNumbers and ensure array matches quantity
-    row.serialNumbers = Array(row.quantity).fill('');
+
+    const balances = this.openingBalances.filter(b => b.itemName === row.itemName);
+
+    if (balances.length > 0) {
+      const allSerials = balances.flatMap(b => this.normalizeSerialArray(b.serialNumbers));
+      // استبعد المصروفة سابقًا
+      row.availableSerials = allSerials.filter(sn => !this.usedSerialNumbers.includes(sn));
+      row.availableQuantity = balances.reduce((s, b) => s + (b.quantityAvailable || 0), 0);
+
+      // مبدئيًا خد أول N سيريال على حسب الكمية
+      row.quantity = Math.min(row.availableQuantity, row.availableSerials.length || row.availableQuantity);
+      row.serialNumbers = row.availableSerials.slice(0, row.quantity);
+    } else {
+      row.availableQuantity = 0;
+      row.availableSerials = [];
+      row.serialNumbers = [];
+    }
   }
 
+
+
   onQuantityChangeRow(row: any) {
-    // Ensure serialNumbers array matches quantity
     const qty = Number(row.quantity) || 1;
-    if (!Array.isArray(row.serialNumbers)) { row.serialNumbers = []; }
+    if (!Array.isArray(row.serialNumbers)) {
+      row.serialNumbers = [];
+    }
     if (row.serialNumbers.length > qty) {
       row.serialNumbers = row.serialNumbers.slice(0, qty);
     } else if (row.serialNumbers.length < qty) {
@@ -134,109 +251,119 @@ export class DispatchComponent implements OnInit {
     }
   }
 
+  getAvailableSerials(row: any, index: number): string[] {
+    const all = Array.isArray(row.availableSerials) ? row.availableSerials : [];
+    const used = [...row.serialNumbers];
+    used.splice(index, 1); // نحذف السيريال الحالي من المقارنة
+
+    return all.filter((sn: string) => !used.includes(sn));
+  }
+  private normalizeSerialArray(v: any): string[] {
+    if (!v) return [];
+    if (Array.isArray(v)) return v.map(x => String(x).trim()).filter(Boolean);
+    if (typeof v === 'string') return v.split(',').map(s => s.trim()).filter(Boolean);
+    return [String(v).trim()];
+  }
+
   async onSubmit() {
-    console.log('DEBUG: onSubmit called');
-    this.warningMessage = '';
-    this.successMessage = '';
-    if (this.dispatchForm.invalid || !this.selectedFile) {
-      this.warningMessage = 'يرجى تعبئة جميع الحقول وإرفاق السند.';
-      console.log('DEBUG: Form invalid or file missing', this.dispatchForm.value, this.selectedFile);
-      return;
-    }
-    // Validate all item rows
-    for (const [idx, row] of this.itemsRows.entries()) {
-      console.log(`DEBUG: Validating row ${idx}`, row);
-      if (!row.itemName || !row.stockNumber || !row.quantity || row.quantity < 1) {
-        this.warningMessage = 'يرجى تعبئة جميع بيانات الأصناف بشكل صحيح.';
-        console.log('DEBUG: Invalid row data', row);
+  console.log('--- بدء عملية الصرف ---');
+  this.warningMessage = '';
+  this.successMessage = '';
+
+  // ✅ التحقق من الحقول الأساسية
+  if (this.dispatchForm.invalid) {
+    this.warningMessage = 'يرجى تعبئة جميع بيانات النموذج الأساسية.';
+    return;
+  }
+
+  if (this.dispatchForm.get('receiverName')?.value === 'other' && !this.customReceiver.trim()) {
+    this.warningMessage = 'يرجى إدخال اسم المستلم الجديد.';
+    return;
+  }
+
+  const receiptNumber = this.dispatchForm.get('receiptNumber')?.value;
+  if (this.dispatches.some(d => String(d.documentNumber).trim() === String(receiptNumber).trim())) {
+    this.warningMessage = 'رقم السند مستخدم من قبل.';
+    return;
+  }
+
+  // ✅ قراءة الملف
+  let fileBase64 = '';
+  if (this.selectedFile) {
+    fileBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject('تعذر قراءة ملف الإيصال.');
+      reader.readAsDataURL(this.selectedFile as Blob);
+    });
+  }
+
+  this.loading = true;
+
+  try {
+    const itemsData: any[] = [];
+
+    for (const row of this.itemsRows) {
+      // تحقق من الكميات
+      const balances = this.openingBalances.filter(b => String(b.stockNumber).trim() === String(row.stockNumber).trim());
+      const totalAvailable = balances.reduce((s, b) => s + (b.quantityAvailable || 0), 0);
+      if (row.quantity > totalAvailable) {
+        this.warningMessage = `الكمية المطلوبة (${row.quantity}) أكبر من المتوفر (${totalAvailable}) للصنف ${row.stockNumber}`;
+        this.loading = false;
         return;
       }
-      // Check opening balance
-      const balance = this.openingBalances.find(b => String(b.stockNumber).trim() === String(row.stockNumber).trim());
-      if (!balance) {
-        this.warningMessage = `لا يوجد رصيد مطابق لرقم الصنف: ${row.stockNumber}`;
-        console.log('DEBUG: No matching balance for', row.stockNumber);
-        return;
-      }
-      if (row.quantity > balance.quantityAvailable) {
-        this.warningMessage = `الكمية المطلوبة (${row.quantity}) أكبر من المتوفر (${balance.quantityAvailable}) للصنف: ${row.stockNumber}`;
-        console.log('DEBUG: Quantity exceeds available', row.quantity, balance.quantityAvailable);
-        return;
-      }
-    }
-    // Check for unique receiptNumber
-    const receiptNumber = this.dispatchForm.get('receiptNumber')?.value;
-    if (this.dispatches.some(d => String(d.receiptNumber).trim() === String(receiptNumber).trim())) {
-      this.warningMessage = 'رقم السند مستخدم من قبل. يرجى إدخال رقم سند فريد.';
-      console.log('DEBUG: Duplicate receiptNumber', receiptNumber);
-      return;
-    }
-    this.loading = true;
-    // Read file as base64
-    let fileBase64: string = '';
-    try {
-      fileBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject('تعذر قراءة ملف الإيصال.');
-        reader.readAsDataURL(this.selectedFile as Blob);
-      });
-    } catch (err) {
-      this.warningMessage = String(err);
-      this.loading = false;
-      console.log('DEBUG: File read error', err);
-      return;
-    }
-    // Save each item row as a dispatch and update openingBalances
-    const savePromises = this.itemsRows.map(async (row, idx) => {
-      // Update opening balance
-      const balance = this.openingBalances.find(b => String(b.stockNumber).trim() === String(row.stockNumber).trim());
-      if (balance) {
-        const newBalance = { ...balance, quantityAvailable: balance.quantityAvailable - row.quantity };
-        try {
-          await this.http.put(`http://localhost:3000/openingBalances/${balance.id}`, newBalance).toPromise();
-          console.log(`DEBUG: Updated opening balance for row ${idx}`, newBalance);
-        } catch (err) {
-          console.log(`DEBUG: Error updating opening balance for row ${idx}`, err);
-        }
-      }
-      // Save dispatch
-      const dispatchData = {
-        unitName: this.dispatchForm.get('unitName')?.value,
-        receiverName: this.dispatchForm.get('receiverName')?.value,
-        receiptNumber,
+
+      // 🔹 جلب orderNumber من الرصيد
+      const relatedBalance = balances[0];
+      const orderNumber = relatedBalance?.orderNumber || null;
+
+      itemsData.push({
         itemName: row.itemName,
         stockNumber: row.stockNumber,
         quantity: row.quantity,
-        serialNumber: row.serialNumbers.filter((s: string) => s).join(','),
-        status: 'completed',
-        receipt: fileBase64,
-        date: this.formatDateToISOString(this.dispatchForm.get('date')?.value) // Format as ISO string
-      };
-      try {
-        await this.http.post('http://localhost:3000/dispatches', dispatchData).toPromise();
-        console.log(`DEBUG: Saved dispatch for row ${idx}`, dispatchData);
-      } catch (err) {
-        console.log(`DEBUG: Error saving dispatch for row ${idx}`, err);
-      }
-    });
-    try {
-      await Promise.all(savePromises);
-      this.successMessage = 'تم الصرف بنجاح!';
-      this.dispatchForm.reset();
-      this.itemsRows = [{ itemName: '', stockNumber: '', quantity: 1, serialNumbers: [] }];
-      this.dispatchForm.get('quantity')?.setValue(1);
-      this.selectedFile = null;
-      this.loading = false;
-      this.loadOpeningBalances();
-      this.loadDispatches();
-      console.log('DEBUG: All dispatches saved successfully');
-    } catch (err) {
-      this.warningMessage = typeof err === 'string' ? err : 'حدث خطأ أثناء حفظ بيانات الصرف.';
-      this.loading = false;
-      console.log('DEBUG: Error in savePromises', err);
+        serialNumbers: row.serialNumbers.filter((s: string) => s !== ''),
+        orderNumber
+      });
+
+      // خصم من الرصيد
+      await this.depleteBalancesByRow(row);
     }
+
+    // 📦 تجهيز جسم الطلب (نفس شكل expenses)
+    const documentData = {
+      unitName: this.dispatchForm.get('unitName')?.value,
+      receiver: this.dispatchForm.get('receiverName')?.value === 'other'
+        ? this.customReceiver.trim()
+        : this.dispatchForm.get('receiverName')?.value,
+      documentNumber: receiptNumber,
+      type: "صرف من المستودع",
+      attachment: fileBase64,
+      items: itemsData,
+      date: this.formatDateToISOString(this.dispatchForm.get('date')?.value)
+    };
+
+    // 🔹 حفظ نسخة في dispatches
+    await this.http.post('http://localhost:3000/dispatches', documentData).toPromise();
+    console.log("📦 تم الحفظ في dispatches", documentData);
+
+    // 🔹 حفظ نسخة في expenses
+    await this.http.post('http://localhost:3000/expenses', documentData).toPromise();
+    console.log("💰 تم الحفظ في expenses", documentData);
+
+    this.successMessage = '✅ تم حفظ بيانات الصرف بنجاح.';
+    this.dispatchForm.reset();
+    this.itemsRows = [{ itemName: '', stockNumber: '', quantity: 1, serialNumbers: [] }];
+    this.selectedFile = null;
+    this.loadDispatches();
+
+  } catch (err) {
+    console.error('❌ خطأ أثناء الحفظ:', err);
+    this.warningMessage = 'حدث خطأ أثناء الحفظ.';
+  } finally {
+    this.loading = false;
   }
+}
+ 
 
   formatDateToISOString(dateStr: string): string {
     if (!dateStr) { return ''; }

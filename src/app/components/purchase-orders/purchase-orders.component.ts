@@ -9,8 +9,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 @Component({
   selector: 'app-purchase-orders',
   standalone: true,
-    schemas: [NO_ERRORS_SCHEMA],
-  imports: [HttpClientModule,CommonModule,NgFor,ReactiveFormsModule],
+  schemas: [NO_ERRORS_SCHEMA],
+  imports: [HttpClientModule, CommonModule, NgFor, ReactiveFormsModule],
   templateUrl: './purchase-orders.component.html',
   styleUrls: ['./purchase-orders.component.css']
 })
@@ -97,7 +97,7 @@ export class PurchaseOrdersComponent implements OnInit {
     const serialNumbers = itemGroup.get('serialNumbers') as FormArray;
     serialNumbers.clear();
     for (let i = 0; i < quantity; i++) {
-      serialNumbers.push(this.fb.control(''));
+      serialNumbers.push(this.fb.control(null)); 
     }
   }
 
@@ -111,7 +111,8 @@ export class PurchaseOrdersComponent implements OnInit {
     this.isLoading = true;
     this.http.get<any[]>('http://localhost:3000/orders').subscribe({
       next: (data) => {
-        this.orders = data.reverse(); // Show newest first
+        this.orders =  data.sort((a: any, b: any) =>
+  new Date(b.date).getTime() - new Date(a.date).getTime());// Show newest first
         this.isLoading = false;
       },
       error: (err) => {
@@ -126,7 +127,26 @@ export class PurchaseOrdersComponent implements OnInit {
     if (this.orderForm.invalid) {
       return;
     }
-    const order = this.orderForm.value;
+    // 1. Get raw values to include disabled fields like stockNumber
+    const rawOrder = this.orderForm.getRawValue();
+
+    // 2. Assign stockNumber manually into order object
+    const order = {
+      ...rawOrder,
+      items: rawOrder.items.map((item: any, index: number) => ({
+        ...item,
+        // Ensure quantity is number
+        quantity: Number(item.quantity || 0),
+        serialNumbers: (item.serialNumbers || []).map((sn: any) => Number(sn)),
+        
+      }))
+    };
+
+    // تأكد من تحويل كل serialNumbers من string إلى number
+    order.items.forEach((item: any) => {
+      item.serialNumbers = item.serialNumbers.map((sn: any) => Number(sn));
+    });
+
     // Use user-selected date
     // order.date = new Date().toISOString(); // REMOVE this line
     // اسم المورد is already included in order object
@@ -162,28 +182,38 @@ export class PurchaseOrdersComponent implements OnInit {
   }
 
   async updateOpeningBalancesWithOrder(order: any) {
-    // For each item in the order, update the corresponding opening balance
-    const openingBalances = await this.http.get<any[]>('http://localhost:3000/openingBalances').toPromise();
-    for (const item of order.items) {
-      // Find by itemName (not just stockNumber)
-      const balance = (openingBalances || []).find(b => b.itemName === item.itemName);
-      if (balance) {
-        // Only add the new entered quantity to the current quantityAvailable
-        const updated = { ...balance, quantityAvailable: Number(balance.quantityAvailable || 0) + Number(item.quantity || 0) };
-        await this.http.put(`http://localhost:3000/openingBalances/${balance.id}`, updated).toPromise();
-      } else {
-        // If not found, create a new opening balance for this item
-        const newBalance = {
-          stockNumber: item.stockNumber || '',
-          itemName: item.itemName,
-          quantityAvailable: Number(item.quantity || 0),
-          serialNumbers: '',
-          linkedToOrder: true
-        };
-        await this.http.post('http://localhost:3000/openingBalances', newBalance).toPromise();
-      }
+  const openingBalances = await this.http.get<any[]>('http://localhost:3000/openingBalances').toPromise();
+
+  for (const item of order.items) {
+    const serialsArray = (item.serialNumbers || []).map((sn:any) => String(sn));
+
+    const balance = (openingBalances || []).find(b => b.itemName === item.itemName);
+
+    if (balance) {
+      const updated = {
+        ...balance,
+        quantityAvailable: Number(balance.quantityAvailable || 0) + Number(item.quantity || 0),
+        serialNumbers: [...(balance.serialNumbers || []), ...serialsArray],
+        linkedToOrder: true,
+        orderNumber: order.orderNumber   // ✅ إضافة رقم الأمر هنا
+      };
+      await this.http.put(`http://localhost:3000/openingBalances/${balance.id}`, updated).toPromise();
+    } else {
+      const newBalance = {
+        stockNumber: item.stockNumber || '',
+        itemName: item.itemName,
+        quantityAvailable: Number(item.quantity || 0),
+        serialNumbers: serialsArray,
+        linkedToOrder: true,
+        orderNumber: order.orderNumber   // ✅ إضافة رقم الأمر هنا
+      };
+      await this.http.post('http://localhost:3000/openingBalances', newBalance).toPromise();
     }
   }
+}
+
+
+
 
   // Add file upload support
   onFileSelected(event: any) {

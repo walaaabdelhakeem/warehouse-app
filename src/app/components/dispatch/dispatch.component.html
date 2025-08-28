@@ -1,103 +1,130 @@
 <div class="dispatch-container">
-  <div class="container py-4 px-2 px-md-5" style="max-width: 900px; font-family: 'Cairo', 'Arial', sans-serif;">
+  <div class="container py-4 px-2 px-md-5"
+    style="max-width: 900px; font-family: 'Cairo', 'Arial', sans-serif;">
     <h2 class="mb-4 text-center fw-bold">الصرف من المستودع</h2>
 
-    <form [formGroup]="dispatchForm" (ngSubmit)="onSubmit()" enctype="multipart/form-data" novalidate>
+    <form [formGroup]="dispatchForm" (ngSubmit)="onSubmit()"
+      enctype="multipart/form-data" novalidate>
       <div class="row g-3 mb-3">
         <div class="col-md-6">
           <label class="form-label">اسم الوحدة</label>
-          <select class="form-select" formControlName="unitName" (change)="onUnitNameChange($event)" required>
-            <option value="">اختر الوحدة</option>
-            <option *ngFor="let unit of units" [value]="unit.unitName">{{ unit.unitName }}</option>
+          <select class="form-select" formControlName="unitName"
+            (change)="onUnitNameChange($event)" required>
+            <option value>اختر الوحدة</option>
+            <option *ngFor="let unit of units" [value]="unit.unitName">{{
+              unit.unitName }}</option>
           </select>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">اسم المستلم</label>
-          <select class="form-select" formControlName="receiverName" required>
-            <option value="">اختر اسم المستلم</option>
-            <option *ngFor="let recipient of recipients" [value]="recipient">{{ recipient }}</option>
-          </select>
+        <!-- قائمة المستلمين -->
+        <div class="col-md-6 mb-3">
+          <label for="receiver" class="mb-2">اسم المستلم</label>
+          <select class="form-control"
+        id="receiverName"
+        formControlName="receiverName"
+        (change)="onReceiverChange($event)">
+  <option *ngFor="let name of recipients" [value]="name">{{ name }}</option>
+  <option value="other">اسم مستلم جديد</option>
+</select>
+
+
         </div>
+        <div class="form-group mt-3" *ngIf="dispatchForm.get('receiverName')?.value === 'other'">
+  <label for="customReceiver">أدخل اسم المستلم الجديد</label>
+  <input type="text"
+         class="form-control"
+         id="customReceiver"
+         name="customReceiver"
+         [(ngModel)]="customReceiver"
+         [ngModelOptions]="{standalone: true}"
+         required>
+</div>
+
+
         <div class="col-md-6">
           <label class="form-label">رقم السند</label>
-          <input type="number" class="form-control" formControlName="receiptNumber" placeholder="رقم الإيصال" required min="1" step="1">
+          <input type="number" class="form-control"
+            formControlName="receiptNumber" placeholder="رقم السند" required
+            min="1" step="1">
         </div>
         <div class="col-md-6">
           <label class="form-label">رفع السند (PDF/صورة)</label>
-          <input type="file" class="form-control" (change)="onFileChange($event)" accept=".pdf,image/*" required>
+          <input type="file" class="form-control"
+            (change)="onFileChange($event)" accept=".pdf,image/*" required>
         </div>
         <div class="col-md-6">
           <label class="form-label">تاريخ الصرف</label>
-          <input type="date" class="form-control" formControlName="date" required>
+          <input type="date" class="form-control arabic-date" formControlName="date"
+            required>
         </div>
       </div>
 
       <div class="card mb-3">
         <div class="card-header bg-light fw-bold">تفاصيل الأصناف</div>
         <div class="card-body">
-          <div *ngFor="let row of itemsRows; let i = index" class="row g-3 align-items-end mb-2 border-bottom pb-2">
+          <div *ngFor="let row of itemsRows; let i = index"
+            class="row g-3 align-items-end mb-2 border-bottom pb-2">
             <div class="col-md-3">
               <label class="form-label">اسم الصنف</label>
-              <select class="form-select"
-                [(ngModel)]="row.itemName"
-                name="itemName{{i}}"
-                [ngModelOptions]="{standalone: true}"
+              <select class="form-select" [(ngModel)]="row.itemName"
+                name="itemName{{i}}" [ngModelOptions]="{standalone: true}"
                 (change)="onItemNameChangeRow(row)">
-                <option value="">اختر اسم الصنف</option>
-                <option *ngFor="let item of itemsList" [value]="item.itemName">{{ item.itemName }}</option>
+                <option value>اختر اسم الصنف</option>
+                <option *ngFor="let item of itemsList"
+                  [value]="item.itemName">{{ item.itemName }}</option>
               </select>
             </div>
             <div class="col-md-2">
               <label class="form-label">رقم الصنف</label>
               <input type="text" class="form-control"
-                [(ngModel)]="row.stockNumber"
-                name="stockNumber{{i}}"
-                [ngModelOptions]="{standalone: true}"
-                readonly>
+                [(ngModel)]="row.stockNumber" name="stockNumber{{i}}"
+                [ngModelOptions]="{standalone: true}" readonly>
             </div>
             <div class="col-md-2">
               <label class="form-label">الكمية</label>
               <input type="number" class="form-control"
-                [(ngModel)]="row.quantity"
-                name="quantity{{i}}"
-                [ngModelOptions]="{standalone: true}"
-                min="1"
-                (change)="onQuantityChangeRow(row)">
+                [value]="row.availableQuantity" [(ngModel)]="row.quantity"
+                name="quantity{{i}}" [ngModelOptions]="{standalone: true}"
+                min="1" (change)="onQuantityChangeRow(row)">
             </div>
             <div class="col-md-4">
               <label class="form-label">الأرقام التسلسلية (اختياري)</label>
               <ng-container *ngIf="row.itemName && row.quantity">
-                <ng-container *ngFor="let snIdx of [].constructor(row.quantity); let j = index">
+                <ng-container
+                  *ngFor="let snIdx of [].constructor(row.quantity); let j = index">
                   <select class="form-select my-1"
                     [ngModel]="row.serialNumbers[j]"
                     (ngModelChange)="row.serialNumbers[j] = $event"
                     [ngModelOptions]="{standalone: true}"
                     name="serialNumber{{i}}_{{j}}">
-                    <option value="">بدون رقم تسلسلي</option>
-                    <option *ngFor="let sn of getSerialNumbersForRow(row)"
-                      [value]="sn"
-                      [disabled]="row.serialNumbers.includes(sn) && row.serialNumbers[j] !== sn">
+                    <option value>بدون رقم تسلسلي</option>
+                    <option *ngFor="let sn of getAvailableSerials(row, j)"
+                      [value]="sn">
                       {{ sn }}
                     </option>
                   </select>
                 </ng-container>
               </ng-container>
             </div>
-            <div class="col-md-1 d-flex align-items-center justify-content-center">
-              <button type="button" class="btn btn-danger btn-sm" (click)="removeItemRow(i)" *ngIf="itemsRows.length > 1">-</button>
+            <div
+              class="col-md-1 d-flex align-items-center justify-content-center">
+              <button type="button" class="btn btn-danger btn-sm"
+                (click)="removeItemRow(i)"
+                *ngIf="itemsRows.length > 1">-</button>
             </div>
           </div>
 
           <div class="row mt-2">
             <div class="col-12 text-end">
-              <button type="button" class="btn btn-success" (click)="addItemRow()">إضافة صنف جديد</button>
+              <button type="button" class="btn btn-success"
+                (click)="addItemRow()">إضافة صنف جديد</button>
             </div>
           </div>
         </div>
       </div>
 
       <div class="d-flex justify-content-end">
-        <button type="submit" class="btn btn-primary px-4 py-2 fw-bold" [disabled]="loading">صرف من المستودع</button>
+        <button type="submit" class="btn btn-primary px-4 py-2 fw-bold"
+          [disabled]="loading">صرف من المستودع</button>
       </div>
     </form>
   </div>
@@ -105,41 +132,37 @@
   <div class="container mt-5">
     <h4 class="mb-3 text-center">سجل عمليات الصرف</h4>
     <div class="table-responsive">
-      <table class="table table-bordered table-striped align-middle text-center">
-        <thead class="table-light">
-          <tr>
-            <th>#</th>
-            <th>اسم الوحدة</th>
-            <th>اسم المستلم</th>
-            <th>رقم السند</th>
-            <th>الصنف</th>
-            <th>رقم الصنف</th>
-            <th>الرقم التسلسلي</th>
-            <th>الكمية</th>
-            <th>الحالة</th>
-            <th>تاريخ الصرف</th>
-            <th>السند</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let d of dispatches; let i = index">
-            <td>{{ i + 1 }}</td>
-            <td>{{ d.unitName }}</td>
-            <td>{{ d.receiverName }}</td>
-            <td>{{ d.receiptNumber }}</td>
-            <td>{{ d.itemName }}</td>
-            <td>{{ d.stockNumber }}</td>
-            <td>{{ d.serialNumber }}</td>
-            <td>{{ d.quantity }}</td>
-            <td>{{ d.status === 'completed' ? 'اكتملت' : d.status }}</td>
-            <td>{{ d.date ? (d.date | date:'yyyy/MM/dd') : '-' }}</td>
-            <td>
-              <a *ngIf="d.receipt" [href]="d.receipt" target="_blank">عرض السند</a>
-              <span *ngIf="!d.receipt">لا يوجد</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+       <table class="table table-bordered table-hover">
+    <thead class="table-primary">
+      <tr>
+        <th>اسم الوحدة</th>
+        <th>العناصر</th>
+        <th>المستلم</th>
+        <th>النوع</th>
+        <th>رقم المستند</th>
+        <th>التاريخ </th>
+        <th>الملف المرفق</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let expense of dispatches.slice(0,10)">
+        <td>{{ expense.unitName }}</td>
+        <td>
+          <ul>
+            <li *ngFor="let item of expense.items">{{ item.itemName }} - الكمية: {{ item.quantity }}</li>
+          </ul>
+        </td>
+        <td>{{ expense.receiver }}</td>
+        <td>{{ expense.type }}</td>
+        <td>{{ expense.documentNumber }}</td>
+        <td>{{ expense.date ? (expense.date | date:'yyyy/MM/dd') : '-' }}</td>
+        <td>
+          <a *ngIf="expense.attachment" [href]="expense.attachment" download="attachment" target="_blank">تحميل الملف</a>
+          <span *ngIf="!expense.attachment">لا يوجد</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
     </div>
   </div>
 </div>

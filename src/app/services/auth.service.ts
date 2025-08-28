@@ -20,7 +20,7 @@ export class AuthService {
   login(username: string, password: string): Observable<boolean> {
     return this.http.get<User[]>(`${this.apiUrl}?username=${username}&password=${password}`).pipe(
       map(users => {
-        if (users.length > 0) {
+        if (users.length > 0&&typeof window !== 'undefined') {
           localStorage.setItem('currentUser', JSON.stringify(users[0]));
           return true;
         }
@@ -30,18 +30,26 @@ export class AuthService {
   }
 
   logout() {
+      if (typeof window !== 'undefined') {
+
     localStorage.removeItem('currentUser');
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login']);}
   }
 
-  getCurrentUser(): User | null {
+ isLoggedIn(): boolean {
+  if (typeof window !== 'undefined') {
+    return !!localStorage.getItem('currentUser');
+  }
+  return false;
+}
+
+getCurrentUser(): User | null {
+  if (typeof window !== 'undefined') {
     const user = localStorage.getItem('currentUser');
     return user ? JSON.parse(user) : null;
   }
-
-  isLoggedIn(): boolean {
-    return !!localStorage.getItem('currentUser');
-  }
+  return null;
+}
 
   getRole(): string | null {
     const user = this.getCurrentUser();

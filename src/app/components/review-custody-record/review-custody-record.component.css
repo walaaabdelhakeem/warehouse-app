@@ -1,0 +1,29 @@
+.table th {
+  font-weight: 600;
+  text-align: center;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.bi {
+  margin-left: 5px;
+}
+
+.alert {
+  border-radius: 8px;
+}
+
+.modal-header {
+  border-bottom: none;
+}
+
+.modal-footer {
+  border-top: none;
+}

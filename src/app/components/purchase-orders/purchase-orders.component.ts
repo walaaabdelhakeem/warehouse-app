@@ -30,24 +30,40 @@ export class PurchaseOrdersComponent implements OnInit {
   // Add file upload support
   selectedFile: File | null = null;
   uploadedFileUrl: string = '';
+  globalTransferDate: string = '';
 
   constructor(private fb: FormBuilder, private http: HttpClient) {
     this.orderForm = this.fb.group({
       orderType: ['', Validators.required],
       orderNumber: ['', Validators.required],
       supplierName: ['', Validators.required], // اسم المورد required
-      date: ['', Validators.required], // تاريخ التعاميد
+      dateForm: this.fb.group({
+        day: ['', [Validators.required, Validators.min(1), Validators.max(31)]],
+        month: ['', [Validators.required, Validators.min(1), Validators.max(12)]],
+        year: ['', [Validators.required, Validators.min(1900), Validators.max(2100)]],
+      }),
       items: this.fb.array([this.createItemGroup()])
     });
     this.loadOrders();
     this.fetchItemsList();
   }
-
+  getFullDate(): string {
+    const { day, month, year } = this.orderForm.get('dateForm')?.value;
+    return `${day}.${month}.${year}`;
+  }
   ngOnInit() {
+    const today = new Date();
+    this.globalTransferDate = this.formatGregorianDate(today);
+
     // For standalone component lifecycle
     this.fetchItemsList();
   }
-
+  formatGregorianDate(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
   get items(): FormArray {
     return this.orderForm.get('items') as FormArray;
   }
@@ -98,7 +114,7 @@ export class PurchaseOrdersComponent implements OnInit {
     const serialNumbers = itemGroup.get('serialNumbers') as FormArray;
     serialNumbers.clear();
     for (let i = 0; i < quantity; i++) {
-      serialNumbers.push(this.fb.control(null)); 
+      serialNumbers.push(this.fb.control(null));
     }
   }
 
@@ -112,8 +128,8 @@ export class PurchaseOrdersComponent implements OnInit {
     this.isLoading = true;
     this.http.get<any[]>('http://localhost:3000/orders').subscribe({
       next: (data) => {
-        this.orders =  data.sort((a: any, b: any) =>
-  new Date(b.date).getTime() - new Date(a.date).getTime());// Show newest first
+        this.orders = data
+           
         this.isLoading = false;
       },
       error: (err) => {
@@ -124,38 +140,44 @@ export class PurchaseOrdersComponent implements OnInit {
   }
 
   async onSubmit() {
+    if ((this.orderForm.get('dateForm') as FormGroup).invalid) {
+      alert('من فضلك أدخل تاريخ صحيح');
+      return;
+    }
     this.submitted = true;
     if (this.orderForm.invalid) {
       return;
     }
-    // 1. Get raw values to include disabled fields like stockNumber
-    const rawOrder = this.orderForm.getRawValue();
 
-    // 2. Assign stockNumber manually into order object
+    const rawOrder = this.orderForm.getRawValue();
+    const { day, month, year } = this.orderForm.get('dateForm')?.value;
+    // التاريخ للتخزين (yyyy-MM-dd) عشان الفرز يشتغل
+    const dbDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
     const order = {
       ...rawOrder,
-      items: rawOrder.items.map((item: any, index: number) => ({
+      date: dbDate, // ✅ إضافة التاريخ
+      items: rawOrder.items.map((item: any) => ({
         ...item,
-        // Ensure quantity is number
         quantity: Number(item.quantity || 0),
-        serialNumbers: (item.serialNumbers || []).map((sn: any) => Number(sn)),
-        
+        serialNumbers: (item.serialNumbers || []).map((sn: any) => String(sn).trim())
       }))
     };
 
-    // تأكد من تحويل كل serialNumbers من string إلى number
-    order.items.forEach((item: any) => {
-      item.serialNumbers = item.serialNumbers.map((sn: any) => Number(sn));
-    });
 
-    // Use user-selected date
-    // order.date = new Date().toISOString(); // REMOVE this line
-    // اسم المورد is already included in order object
-    // Save order as before
+    // ✅ تحقق من تكرار السيريال نمبر داخل نفس الطلب
+    for (const item of order.items) {
+      const serials = item.serialNumbers;
+      const uniqueSerials = new Set(serials);
+      if (serials.length !== uniqueSerials.size) {
+        alert(`فيه سيريال نمبر مكرر في الصنف: ${item.itemName}`);
+        return;
+      }
+    }
+
     const saveOrder = () => {
       this.http.post('http://localhost:3000/orders', order).subscribe({
-        next: async (res) => {
-          // After saving order, update openingBalances
+        next: async () => {
           await this.updateOpeningBalancesWithOrder(order);
           this.loadOrders();
           this.orderForm.reset();
@@ -169,6 +191,7 @@ export class PurchaseOrdersComponent implements OnInit {
         }
       });
     };
+
     if (this.selectedFile) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -183,38 +206,51 @@ export class PurchaseOrdersComponent implements OnInit {
   }
 
   async updateOpeningBalancesWithOrder(order: any) {
-const openingBalances = await firstValueFrom(this.http.get<any[]>('http://localhost:3000/openingBalances'));
+    const openingBalances = await firstValueFrom(
+      this.http.get<any[]>('http://localhost:3000/openingBalances')
+    );
 
-  for (const item of order.items) {
-    const serialsArray = (item.serialNumbers || []).map((sn:any) => String(sn));
+    for (const item of order.items) {
+      const serialsArray = (item.serialNumbers || []).map((sn: any) => String(sn).trim());
+      const balance = (openingBalances || []).find(b => b.itemName === item.itemName);
 
-    const balance = (openingBalances || []).find(b => b.itemName === item.itemName);
+      if (balance) {
+        const existingSerials = balance.serialNumbers || [];
 
-    if (balance) {
-      const updated = {
-        ...balance,
-        quantityAvailable: Number(balance.quantityAvailable || 0) + Number(item.quantity || 0),
-        serialNumbers: [...(balance.serialNumbers || []), ...serialsArray],
-        linkedToOrder: true,
-        orderNumber: order.orderNumber   // ✅ إضافة رقم الأمر هنا
-      };
+        // ✅ تحقق من التكرار مع المخزون
+        const duplicates = serialsArray.filter((sn: any) => existingSerials.includes(sn));
+        if (duplicates.length > 0) {
+          alert(`السيريال نمبر التالي مكرر بالفعل: ${duplicates.join(', ')}`);
+          return;
+        }
 
-      await firstValueFrom(
-        this.http.put(`http://localhost:3000/openingBalances/${balance.id}`, updated)
-      );    } else {
-      const newBalance = {
-        stockNumber: item.stockNumber || '',
-        itemName: item.itemName,
-        quantityAvailable: Number(item.quantity || 0),
-        serialNumbers: serialsArray,
-        linkedToOrder: true,
-        orderNumber: order.orderNumber   // ✅ إضافة رقم الأمر هنا
-      };
-  await firstValueFrom(
-        this.http.post('http://localhost:3000/openingBalances', newBalance)
-      );    }
+        const updated = {
+          ...balance,
+          quantityAvailable: Number(balance.quantityAvailable || 0) + Number(item.quantity || 0),
+          serialNumbers: [...existingSerials, ...serialsArray],
+          linkedToOrder: true,
+          orderNumber: order.orderNumber
+        };
+
+        await firstValueFrom(
+          this.http.put(`http://localhost:3000/openingBalances/${balance.id}`, updated)
+        );
+      } else {
+        const newBalance = {
+          stockNumber: item.stockNumber || '',
+          itemName: item.itemName,
+          quantityAvailable: Number(item.quantity || 0),
+          serialNumbers: serialsArray,
+          linkedToOrder: true,
+          orderNumber: order.orderNumber
+        };
+
+        await firstValueFrom(
+          this.http.post('http://localhost:3000/openingBalances', newBalance)
+        );
+      }
+    }
   }
-}
 
 
 
@@ -258,4 +294,12 @@ const openingBalances = await firstValueFrom(this.http.get<any[]>('http://localh
     const found = this.orderTypes.find(t => t.value === value);
     return found ? found.label : value;
   }
+  formatDateToDDMMYYYY(date: Date): string {
+    if (isNaN(date.getTime())) return '';
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
 }

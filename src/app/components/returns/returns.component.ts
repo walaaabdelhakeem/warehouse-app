@@ -1,9 +1,8 @@
-// returns.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, firstValueFrom } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { ReturnsService } from '../../services/returns.service';
 
 @Component({
@@ -21,16 +20,10 @@ export class ReturnsComponent implements OnInit {
   returns: any[] = [];
   recipients: any[] = [];
   expenses: any[] = [];
-  isProcessing = false;
 
   constructor(private fb: FormBuilder, private returnsService: ReturnsService) {}
 
   ngOnInit(): void {
-    this.initForm();
-    this.loadInitialData();
-  }
-
-  private initForm(): void {
     this.returnsForm = this.fb.group({
       unitName: ['', Validators.required],
       receiverName: ['', Validators.required],
@@ -39,196 +32,154 @@ export class ReturnsComponent implements OnInit {
       quantity: ['', [Validators.required, Validators.min(1)]],
       reason: ['', Validators.required]
     });
+
+    this.loadExpenses();
+    this.loadReturns();
   }
 
-  private loadInitialData(): void {
-    forkJoin({
-      expenses: this.returnsService.getExpensesSummary(),
-      returns: this.returnsService.getReturnsPaginated()
-    }).subscribe({
-      next: (data) => {
-        this.expenses = data.expenses;
-        this.returns = data.returns;
-        this.initUnits();
-      },
-      error: (error) => console.error('Error loading data:', error)
+  // ✅ تحميل المصروفات
+  loadExpenses(): void {
+    this.returnsService.getExpenses().subscribe(data => {
+      this.expenses = data;
+      const uniqueUnits = Array.from(new Set(data.map(e => e.unitName)));
+      this.availableUnits = uniqueUnits.map(unitName => ({ unitName }));
     });
   }
 
-  private initUnits(): void {
-    const uniqueUnits = Array.from(new Set(this.expenses.map(e => e.unitName)));
-    this.availableUnits = uniqueUnits.map(unitName => ({ unitName }));
+  // ✅ تحميل آخر 10 إرجاعات فقط
+  loadReturns(): void {
+    this.returnsService.getReturns().subscribe(data => {
+      this.returns = data.slice(-10).reverse();
+    });
   }
 
   onUnitChange(): void {
-    const unit = this.returnsForm.get('unitName')?.value;
-    const unitExpenses = this.expenses.filter(e => e.unitName === unit);
-    this.recipients = [...new Set(unitExpenses.map(e => e.receiverName))];
+    const selectedUnit = this.returnsForm.get('unitName')?.value;
+    const unitExpenses = this.expenses.filter(e => e.unitName === selectedUnit);
+    this.recipients = [...new Set(unitExpenses.map(e => e.receiver))];
+    this.availableItems = [];
+    this.returnsForm.patchValue({ items: '', quantity: '' });
   }
 
   onReceiverChange(): void {
     const unit = this.returnsForm.get('unitName')?.value;
     const receiver = this.returnsForm.get('receiverName')?.value;
-    const expenses = this.expenses.filter(e => e.unitName === unit && e.receiverName === receiver);
+    const expenses = this.expenses.filter(e => e.unitName === unit && e.receiver === receiver);
     this.availableItems = expenses.flatMap(e => e.items);
   }
 
   onItemChange(): void {
-    // ممكن تحط أي لوجيك إضافي هنا
+    const itemName = this.returnsForm.get('items')?.value;
+    const selectedItem = this.availableItems.find(i => i.itemName === itemName);
+    if (selectedItem) {
+      this.returnsForm.patchValue({ quantity: selectedItem.quantity });
+    }
   }
 
   onFileChange(event: any): void {
     const file = event.target.files[0];
-    if (!file) return;
+    if (file) this.returnsForm.patchValue({ receipt: file });
+  }
+
+  // ✅ تنفيذ الإرجاع
+  onSubmit(): void {
+    const formData = this.returnsForm.value;
+    const file: File = formData.receipt;
+    let returnedQty = +formData.quantity;
 
     const reader = new FileReader();
     reader.onload = () => {
-      this.uploadedFile = reader.result as string;
-      this.returnsForm.patchValue({ receipt: file });
-    };
-    reader.readAsDataURL(file);
-  }
+      const base64Receipt = file ? (reader.result as string) : null;
+      const requests = [];
 
-  async onSubmit(): Promise<void> {
-    if (this.returnsForm.invalid) {
-      alert('❌ يرجى ملء جميع الحقول المطلوبة');
-      return;
-    }
-
-    this.isProcessing = true;
-    const formData = this.returnsForm.value;
-
-    try {
-      const base64Receipt = formData.receipt
-        ? await this.readFileAsBase64(formData.receipt)
-        : null;
-
-      const matchingExpenses = await firstValueFrom(
-        this.returnsService.getMatchingExpenses(formData.unitName, formData.receiverName, formData.items)
+      const matchingExpenses = this.expenses.filter(e =>
+        e.unitName === formData.unitName &&
+        e.receiver === formData.receiverName &&
+        e.items.some((i: any) => i.itemName === formData.items)
       );
 
-      if (!matchingExpenses || matchingExpenses.length === 0) {
-        alert('❌ لا توجد مصروفات مطابقة');
+      for (const expense of matchingExpenses) {
+        for (const item of expense.items) {
+          if (item.itemName === formData.items && returnedQty > 0) {
+            const deduct = Math.min(returnedQty, item.quantity);
+            item.quantity -= deduct;
+            returnedQty -= deduct;
+
+            if (item.quantity <= 0) {
+              expense.items = expense.items.filter((i: any) => i.itemName !== formData.items);
+            }
+          }
+        }
+
+        if (expense.items.length === 0) {
+          requests.push(this.returnsService.deleteExpense(expense.id));
+        } else {
+          requests.push(this.returnsService.updateExpense(expense.id, expense));
+        }
+        if (returnedQty <= 0) break;
+      }
+
+      if (returnedQty > 0) {
+        alert('❌ الكمية أكبر من المصروفات');
         return;
       }
 
-      const totalAvailableQty = this.calculateTotalQuantity(matchingExpenses, formData.items);
-      const returnedQty = +formData.quantity;
-
-      if (returnedQty > totalAvailableQty) {
-        alert(`❌ الكمية (${returnedQty}) أكبر من المصروفات المتاحة (${totalAvailableQty})`);
-        return;
-      }
-
-      const batchData = this.prepareBatchData(formData, matchingExpenses, returnedQty, base64Receipt);
-
-     this.returnsService.processReturnBatch(batchData).subscribe({
-  next: () => {
-    alert('✅ تم الإرجاع بنجاح');
-    this.resetForm();
-    this.loadInitialData();
-  },
-  error: (error) => {
-    console.error('Error processing return:', error);
-    alert('❌ حدث خطأ أثناء عملية الإرجاع');
-  },
-  complete: () => {
-    this.isProcessing = false;
-  }
-});
-
-
-    } catch (error) {
-      console.error('Error in onSubmit:', error);
-      alert('❌ حدث خطأ غير متوقع');
-      this.isProcessing = false;
-    }
-  }
-
-  private readFileAsBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  private calculateTotalQuantity(expenses: any[], itemName: string): number {
-    return expenses.reduce((total, expense) => {
-      const item = expense.items.find((i: any) => i.itemName === itemName);
-      return total + (item ? item.quantity : 0);
-    }, 0);
-  }
-
-  private prepareBatchData(formData: any, expenses: any[], returnedQty: number, receipt: string | null): any {
-    const expenseUpdates = [];
-    const expenseDeletions = [];
-    let remainingQty = returnedQty;
-
-    for (const expense of expenses) {
-      if (remainingQty <= 0) break;
-
-      const itemIndex = expense.items.findIndex((i: any) => i.itemName === formData.items);
-      if (itemIndex === -1) continue;
-
-      const item = expense.items[itemIndex];
-      const deduct = Math.min(remainingQty, item.quantity);
-
-      item.quantity -= deduct;
-      remainingQty -= deduct;
-
-      if (item.quantity <= 0) {
-        expense.items.splice(itemIndex, 1);
-      }
-
-      if (expense.items.length === 0) {
-        expenseDeletions.push(expense.id);
-      } else {
-        expenseUpdates.push({ id: expense.id, data: expense });
-      }
-    }
-
-    return {
-      returnData: {
+      const returnEntry = {
         unitName: formData.unitName,
         receiverName: formData.receiverName,
-        receipt: receipt,
+        receipt: base64Receipt,
         items: formData.items,
-        quantity: returnedQty,
-        disposeReason: formData.reason,
-        date: new Date().toISOString()
-      },
-      expenseUpdates,
-      expenseDeletions
+        quantity: +formData.quantity,
+        disposeReason: formData.reason
+      };
+
+      // أولاً أضف الإرجاع
+      requests.unshift(this.returnsService.addReturn(returnEntry));
+
+      forkJoin(requests).subscribe({
+        next: () => {
+          alert('✅ تم الإرجاع');
+          this.returnsForm.reset();
+          this.uploadedFile = base64Receipt;
+          this.loadReturns();
+          this.loadExpenses();
+        }
+      });
     };
+    if (file) reader.readAsDataURL(file);
   }
 
-  private resetForm(): void {
-    this.returnsForm.reset();
-    this.uploadedFile = null;
-    this.availableItems = [];
-    this.recipients = [];
-  }
-
+  // ✅ إلغاء الإرجاع
   cancelReturn(returnItem: any): void {
-    if (!confirm('هل أنت متأكد من إلغاء هذا الإرجاع؟')) return;
+    const requests = [];
+    requests.push(this.returnsService.deleteReturn(returnItem.id));
 
-    this.returnsService.cancelReturnBatch({
-      returnId: returnItem.id,
-      expenseData: {
-        unitName: returnItem.unitName,
-        receiverName: returnItem.receiverName,
-        items: [{ itemName: returnItem.items, quantity: returnItem.quantity }]
+    let expense = this.expenses.find(e =>
+      e.unitName === returnItem.unitName && e.receiver === returnItem.receiverName
+    );
+
+    if (expense) {
+      const item = expense.items.find((i: any) => i.itemName === returnItem.items);
+      if (item) {
+        item.quantity += returnItem.quantity;
+      } else {
+        expense.items.push({ itemName: returnItem.items, quantity: returnItem.quantity });
       }
-    }).subscribe({
+      requests.push(this.returnsService.updateExpense(expense.id, expense));
+    } else {
+      const newExpense = {
+        unitName: returnItem.unitName,
+        receiver: returnItem.receiverName,
+        items: [{ itemName: returnItem.items, quantity: returnItem.quantity }]
+      };
+      requests.push(this.returnsService.addExpense(newExpense));
+    }
+
+    forkJoin(requests).subscribe({
       next: () => {
         alert('✅ تم إلغاء الإرجاع');
-        this.loadInitialData();
-      },
-      error: (error) => {
-        console.error('Error canceling return:', error);
-        alert('❌ حدث خطأ أثناء إلغاء الإرجاع');
+        this.loadReturns();
+        this.loadExpenses();
       }
     });
   }

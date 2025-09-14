@@ -98,4 +98,28 @@ export class ReturnsService {
       `${this.baseUrl}/expenses?unitName=${unitName}&receiver=${receiverName}&items_like=${itemName}`
     );
   }
+  
+  // تحميل الوحدات
+ 
+  // تحميل المناقلات
+  getTransfers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/transfers`);
+  }
+
+  // تحميل المصروفات بناءً على اسم الوحدة
+  getExpensesbyunitName(unitName: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/expenses?unitName=${encodeURIComponent(unitName)}`);
+  }
+
+  // جلب مصروف محدد
+  getExpenseById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/expenses/${id}`);
+  }
+
+
+
+  // إضافة مناقلة جديدة
+  addTransfer(data: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/transfers`, data);
+  }
 }

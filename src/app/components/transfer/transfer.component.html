@@ -2,6 +2,8 @@
   <h2 class="mb-4 text-center">مناقلة العهد</h2>
   <form (ngSubmit)="onSubmit()" #transferForm="ngForm"
     class="bg-white p-4 rounded shadow-sm">
+
+    <!-- اختيار الوحدة والمستلم -->
     <div class="row mb-3">
       <div class="col-md-6 mb-3 mb-md-0">
         <label for="fromUnit" class="form-label">الوحدة المنقولة منها</label>
@@ -13,11 +15,11 @@
       </div>
       <div class="col-md-6 mb-3 mb-md-0">
         <label for="fromUnits" class="form-label">اختر المستلم الجديد</label>
-        <select [(ngModel)]="selectedReceiverOption" for="fromUnits"
+        <select [(ngModel)]="selectedReceiverOption"
           name="receiver"
           class="form-select">
-          <option *ngFor="let name of existingReceivers" [value]="name">{{ name
-            }}</option>
+          <option *ngFor="let name of existingReceivers"
+            [value]="name">{{name}}</option>
           <option value="other">اسم مستلم جديد</option>
         </select>
       </div>
@@ -27,86 +29,96 @@
         <input class="form-control" type="text" [(ngModel)]="customReceiver"
           name="customReceiver" placeholder="اكتب اسم المستلم">
       </div>
-
     </div>
+
+    <!-- ✅ تاريخ المناقلة بالميلادي -->
+    <div class="row mb-3">
+      <form [formGroup]="dateForm" class="d-flex gap-3">
+        <input type="number" class="form-control" formControlName="day"
+          placeholder="اليوم">
+
+        <input type="number" class="form-control" formControlName="month"
+          placeholder="الشهر">
+
+        <input type="number" class="form-control" formControlName="year"
+          placeholder="السنه">
+      </form>
+    </div>
+
+    <!-- جدول العهد -->
     <div class="mb-3">
       <label class="form-label">العهد الحالية المخصصة</label>
-      <div *ngIf="groupedItems.length === 0" class="alert alert-info">لا توجد
-        عهد مخصصة لهذه الوحدة.</div>
-      <div *ngIf="groupedItems.length > 0" class="table-responsive">
-        <table class="table table-bordered table-hover align-middle">
-          <thead class="table-light">
-            <tr>
-              <th scope="col">اختيار</th>
-              <th scope="col">الأصناف</th>
-              <th scope="col">المستلم الحالي</th>
-              <th scope="col">الكميات</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let group of groupedItems">
-              <td>
-                <input type="checkbox" [(ngModel)]="group.selected"
-                  name="selected_{{group.key}}">
-              </td>
-              <td>
-                <div *ngFor="let item of group.items">{{ item.itemName }}</div>
-              </td>
-              <td>
-                <div *ngFor="let item of group.items">
-                  {{ item.receiverName || item.receiver || '-' }}
-                </div>
-              </td>
-              <td>
-                <div *ngFor="let item of group.items">{{ item.originalQuantity
-                  }}</div>
-              </td>
-            </tr>
-
-          </tbody>
-        </table>
+      <div *ngIf="groupedItems.length === 0" class="alert alert-info">
+        لا توجد عهد مخصصة لهذه الوحدة.
       </div>
-    </div>
-    <!-- في جزء الـ form أضف هذا قبل جدول العناصر -->
-    <div class="row mb-3">
-  <div class="col">
-    <label>اليوم (هجري)</label>
-    <select class="form-control" [(ngModel)]="hijriDay" name="hijriDay">
-      <option [ngValue]="null">اختر اليوم</option>
-      <option *ngFor="let d of days" [value]="d">{{ d }}</option>
-    </select>
-  </div>
-  <div class="col">
-    <label>الشهر (هجري)</label>
-    <select class="form-control" [(ngModel)]="hijriMonth" name="hijriMonth">
-      <option [ngValue]="null">اختر الشهر</option>
-      <option *ngFor="let m of hijriMonths" [value]="m.value">{{ m.name }}</option>
-    </select>
-  </div>
-  <div class="col">
-    <label>السنة (هجري)</label>
-    <select class="form-control" [(ngModel)]="hijriYear" name="hijriYear">
-      <option [ngValue]="null">اختر السنة</option>
-      <option *ngFor="let y of years" [value]="y">{{ y }}</option>
-    </select>
-  </div>
+      <div *ngIf="groupedItems.length > 0" class="table-responsive">
+  <table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th scope="col">اختيار</th>
+        <th scope="col">الصنف</th>
+        <th scope="col">المستلم الحالي</th>
+        <th scope="col">الكمية المتوفرة</th>
+        <th scope="col">الكمية المراد نقلها</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let group of groupedItems">
+        <tr *ngFor="let item of group.items">
+          <!-- اختيار الصنف -->
+          <td>
+            <input 
+              type="checkbox" 
+              [(ngModel)]="item.selected" 
+              name="selected_{{group.key}}_{{item.itemName}}">
+          </td>
+
+          <!-- اسم الصنف -->
+          <td>{{ item.itemName }}</td>
+
+          <!-- المستلم الحالي -->
+          <td>{{ item.receiverName || item.receiver || '-' }}</td>
+
+          <!-- الكمية الأصلية -->
+          <td>{{ item.originalQuantity }}</td>
+
+          <!-- إدخال الكمية الجديدة -->
+          <td>
+            <input 
+              type="number" 
+              [(ngModel)]="item.newQuantity" 
+              [max]="item.originalQuantity" 
+              min="1"
+              class="form-control"
+              [disabled]="!item.selected" />
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
 </div>
 
+    </div>
 
+    <!-- رفع ملف -->
     <div class="mb-3">
       <label for="file" class="form-label">إرفاق ملف (اختياري)</label>
       <input type="file" id="file" class="form-control"
         (change)="onFileChange($event)">
     </div>
+
+    <!-- زر المناقلة -->
     <div class="d-flex justify-content-end">
       <button type="submit" class="btn btn-primary px-4"
-       [disabled]="isSubmitting">مناقلة</button>
+        [disabled]="isSubmitting">مناقلة</button>
     </div>
   </form>
+
+  <!-- رسالة نجاح -->
   <div *ngIf="successMessage"
     class="alert alert-success mt-4">{{successMessage}}</div>
 
-  <!-- جدول عرض بيانات النموذج -->
+  <!-- جدول عرض بيانات المناقلة -->
   <div class="mt-5">
     <h4 class="mb-3">جميع بيانات المناقلة</h4>
     <table class="table table-bordered table-striped text-center">
@@ -121,7 +133,6 @@
         </tr>
       </thead>
       <tbody>
-        <!-- لف على كل عملية مناقلة -->
         <tr *ngFor="let transfer of getFilteredTransfers().slice(0,10)">
           <td>{{ transfer.unitName }}</td>
           <td>{{ transfer.oldReceiver || '-' }}</td>
@@ -134,18 +145,14 @@
               </tr>
             </table>
           </td>
-          <td>
-            {{ transfer.transferDate  }}
-          </td>
+          <td>{{ transfer.transferDate }}</td>
           <td>
             <a *ngIf="transfer.file" [href]="transfer.file"
               target="_blank">عرض</a>
             <span *ngIf="!transfer.file">-</span>
           </td>
         </tr>
-
       </tbody>
     </table>
   </div>
-
 </div>

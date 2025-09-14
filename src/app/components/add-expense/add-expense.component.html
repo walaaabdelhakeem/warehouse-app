@@ -1,89 +1,112 @@
 <div class="container mt-4">
   <h2 class="text-center text-primary">إضافة مصروف</h2>
-  <form [formGroup]="addExpenseForm" (ngSubmit)="saveExpense()" class="shadow p-4 rounded bg-light">
+  <form [formGroup]="addExpenseForm" (ngSubmit)="saveExpense()"
+    class="shadow p-4 rounded bg-light">
     <div class="row">
       <div class="col-md-6 mb-3">
         <label for="unitName" class="form-label">اسم الوحدة</label>
-        <select id="unitName" class="form-select" formControlName="unitName" (change)="onUnitChange()" required>
-          <option value="">اختر الوحدة</option>
-          <option *ngFor="let unit of availableUnits" [value]="unit.unitName">{{ unit.unitName }}</option>
+        <select id="unitName" class="form-select" formControlName="unitName"
+          (change)="onUnitChange()" required>
+          <option value>اختر الوحدة</option>
+          <option *ngFor="let unit of availableUnits" [value]="unit.unitName">{{
+            unit.unitName }}</option>
         </select>
       </div>
 
       <div class="col-md-6 mb-3">
-  <label for="receiver" class="form-label">المستلم</label>
-  <select id="receiver" class="form-select" formControlName="receiver" required>
-    <option value="">اختر المستلم</option>
-    <option *ngFor="let recipient of recipients" [value]="recipient">{{ recipient }}</option>
-    <option value="other">اسم مستلم جديد </option>
-  </select>
-</div>
+        <label for="receiver" class="form-label">المستلم</label>
+        <select id="receiver" class="form-select" formControlName="receiver"
+          required>
+          <option value>اختر المستلم</option>
+          <option *ngFor="let recipient of recipients" [value]="recipient">{{
+            recipient }}</option>
+          <option value="other">اسم مستلم جديد </option>
+        </select>
+      </div>
 
-<div *ngIf="addExpenseForm.get('receiver')?.value === 'other'" class="col-md-6 mb-3">
-  <label for="newReceiver" class="form-label">اسم المستلم الجديد</label>
-  <input 
-    type="text" 
-    id="newReceiver" 
-    class="form-control" 
-    formControlName="newReceiver"
-    placeholder="أدخل اسم المستلم الجديد"
-    required
-  >
-</div>
+      <div *ngIf="addExpenseForm.get('receiver')?.value === 'other'"
+        class="col-md-6 mb-3">
+        <label for="newReceiver" class="form-label">اسم المستلم الجديد</label>
+        <input
+          type="text"
+          id="newReceiver"
+          class="form-control"
+          formControlName="newReceiver"
+          placeholder="أدخل اسم المستلم الجديد"
+          required>
+      </div>
     </div>
 
     <div class="row">
       <div class="col-md-6 mb-3">
         <label for="type" class="form-label">النوع</label>
         <select id="type" class="form-select" formControlName="type" required>
-          <option value="">اختر النوع</option>
+          <option value>اختر النوع</option>
           <option value="مناقله">مناقله</option>
           <option value="نموذج صرف">نموذج صرف</option>
           <option value="اخرى">اخرى</option>
         </select>
       </div>
 
-      <div class="col-md-6 mb-3" *ngIf="addExpenseForm.get('type')?.value === 'نموذج صرف'">
+      <div class="col-md-6 mb-3"
+        *ngIf="addExpenseForm.get('type')?.value === 'نموذج صرف'">
         <label for="documentNumber" class="form-label">رقم المستند</label>
-        <input type="text" id="documentNumber" class="form-control" formControlName="documentNumber" required>
+        <input type="text" id="documentNumber" class="form-control"
+          formControlName="documentNumber" required>
       </div>
-      <div *ngIf="addExpenseForm.get('documentNumber')?.hasError('duplicateDocumentNumber') && addExpenseForm.get('documentNumber')?.touched" class="text-danger">
-  رقم السند مستخدم بالفعل لنموذج صرف. يرجى إدخال رقم فريد.
-</div>
+      <div
+        *ngIf="addExpenseForm.get('documentNumber')?.hasError('duplicateDocumentNumber') && addExpenseForm.get('documentNumber')?.touched"
+        class="text-danger">
+        رقم السند مستخدم بالفعل لنموذج صرف. يرجى إدخال رقم فريد.
+      </div>
 
     </div>
 
-    <div class="row">
-  <div class="col-md-6 mb-3">
-    <label for="date" class="form-label">تاريخ المصروف</label>
-    <input type="date" id="date" class="form-control arabic-date" 
-           formControlName="date" required>
+    <div class="row mb-3" formGroupName="dateForm">
+  <div class="d-flex gap-3">
+    <input type="number" class="form-control" formControlName="day" placeholder="اليوم">
+    <input type="number" class="form-control" formControlName="month" placeholder="الشهر">
+    <input type="number" class="form-control" formControlName="year" placeholder="السنة">
   </div>
 </div>
 
+
     <div class="mb-3">
       <label for="items" class="form-label">العناصر</label>
-      <div *ngFor="let item of items.controls; let i = index" [formGroup]="item" class="d-flex align-items-center mb-2">
+      <div *ngFor="let item of items.controls; let i = index" [formGroup]="item"
+        class="d-flex align-items-center mb-2">
         <select class="form-select me-2" formControlName="itemName" required>
-          <option value="" >اختر العنصر</option>
-          <option *ngFor="let availableItem of availableItems" [value]="availableItem.itemName">{{ availableItem.itemName }}</option>
+          <option value>اختر العنصر</option>
+          <option *ngFor="let availableItem of availableItems"
+            [value]="availableItem.itemName">{{ availableItem.itemName
+            }}</option>
         </select>
-        <input type="number" class="form-control me-2" formControlName="quantity" placeholder="الكمية" required>
-        <button type="button" class="btn btn-danger" (click)="items.removeAt(i)">حذف</button>
+        <input type="number" class="form-control me-2"
+          formControlName="quantity" placeholder="الكمية" required>
+        <button type="button" class="btn btn-danger"
+          (click)="items.removeAt(i)">حذف</button>
       </div>
-      <button type="button" class="btn btn-secondary" (click)="addItem({ itemName: '', quantity: null })">إضافة عنصر</button>
+      <button type="button" class="btn btn-secondary"
+        (click)="addItem({ itemName: '', quantity: null })">إضافة عنصر</button>
     </div>
 
     <div class="mb-3">
       <label for="attachment" class="form-label">إرفاق ملف (PDF أو صورة)</label>
-      <input type="file" id="attachment" class="form-control" (change)="handleFileInput($event)" required>
+      <input type="file" id="attachment" class="form-control"
+        (change)="handleFileInput($event)" required>
     </div>
 
-<button type="submit"
-        class="btn btn-primary w-100"
-        [disabled]="addExpenseForm.invalid || items.length === 0 || (addExpenseForm.get('type')?.value === 'Regular' && !addExpenseForm.get('documentNumber')?.value)">
+   <button type="submit"
+  class="btn btn-primary w-100"
+  [disabled]="
+    addExpenseForm.invalid 
+    || items.length === 0 
+    || (addExpenseForm.get('type')?.value === 'نموذج صرف' 
+        && !addExpenseForm.get('documentNumber')?.value)
+  ">
   إضافة المصروف
 </button>
+
   </form>
 
   <h3 class="mt-4 text-primary">المصروفات</h3>
@@ -104,15 +127,17 @@
         <td>{{ expense.unitName }}</td>
         <td>
           <ul>
-            <li *ngFor="let item of expense.items">{{ item.itemName }} - الكمية: {{ item.quantity }}</li>
+            <li *ngFor="let item of expense.items">{{ item.itemName }} - الكمية:
+              {{ item.quantity }}</li>
           </ul>
         </td>
         <td>{{ expense.receiver }}</td>
         <td>{{ expense.type }}</td>
         <td>{{ expense.documentNumber }}</td>
-        <td>{{ expense.date ? (expense.date | date:'yyyy/MM/dd') : '-' }}</td>
+        <td>{{ expense.displayDate }}</td>
         <td>
-          <a *ngIf="expense.attachment" [href]="expense.attachment" download="attachment" target="_blank">تحميل الملف</a>
+          <a *ngIf="expense.attachment" [href]="expense.attachment"
+            download="attachment" target="_blank">تحميل الملف</a>
           <span *ngIf="!expense.attachment">لا يوجد</span>
         </td>
       </tr>

@@ -54,13 +54,16 @@ export class LoginComponent {
       return;
     }
     const { username, password } = this.loginForm.value;
-    this.auth.login(username, password).subscribe(success => {
-      if (success) {
+    this.auth.login({ username, password }).subscribe({
+     next: (res) => {
+          
+          if (res.success ) {
         this.errorMsg = '';
+        this.auth.setLocalstorgeToken(res.data.token)
         this.router.navigate(['/dashboard']);
       } else {
         this.errorMsg = 'اسم المستخدم أو كلمة المرور غير صحيحة';
       }
-    });
+    }});
   }
 }

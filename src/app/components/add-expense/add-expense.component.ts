@@ -21,6 +21,7 @@ export class AddExpenseComponent implements OnInit {
   errorMessage: string = ''; // Error message property
   existingDocumentNumbers: string[] = [];
   customReceiver: string = ''; // إضافة متغير لحفظ اسم المستلم الجديد
+  globalTransferDate: string = '';
 
   constructor(private fb: FormBuilder, private http: HttpClient) {
     this.addExpenseForm = this.fb.group({
@@ -32,10 +33,18 @@ export class AddExpenseComponent implements OnInit {
       attachment: [null, [Validators.required]],
       newReceiver: [''], // أضف هذا الحقل هنا
 
-      date: ['', [Validators.required]] // تاريخ المصروف
+      dateForm: this.fb.group({
+        day: ['', [Validators.required, Validators.min(1), Validators.max(31)]],
+        month: ['', [Validators.required, Validators.min(1), Validators.max(12)]],
+        year: ['', [Validators.required, Validators.min(1900), Validators.max(2100)]],
+      })
     });
-  }
 
+  }
+  getFullDate(): string {
+    const { day, month, year } = this.addExpenseForm.get('dateForm')?.value;
+    return `${day}.${month}.${year}`;
+  }
   get items() {
     return this.addExpenseForm.get('items') as FormArray;
   }
@@ -71,9 +80,18 @@ export class AddExpenseComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const today = new Date();
+    this.globalTransferDate = this.formatGregorianDate(today);
+
     this.loadExpenses(); // Load expenses from db.json on initialization
     this.fetchUnits();
     this.fetchItems();
+  }
+  formatGregorianDate(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   }
   private addNewRecipient(newReceiver: string): void {
     const selectedUnitName = this.addExpenseForm.get('unitName')?.value;
@@ -100,6 +118,16 @@ export class AddExpenseComponent implements OnInit {
     const selectedType = this.addExpenseForm.get('type')?.value;
     const selectedReceiver = this.addExpenseForm.get('receiver')?.value;
 
+    // ✅ بناء التاريخ من الفورم (day/month/year)
+    if ((this.addExpenseForm.get('dateForm') as FormGroup).invalid) {
+      alert('من فضلك أدخل تاريخ صحيح');
+      return;
+    }
+
+    const { day, month, year } = this.addExpenseForm.get('dateForm')?.value;
+    // التاريخ للتخزين (yyyy-MM-dd) عشان الفرز يشتغل
+    const dbDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
     // التحقق من اسم المستلم إذا تم اختيار "آخر"
     if (selectedReceiver === 'other') {
       const newReceiver = this.addExpenseForm.get('newReceiver')?.value?.trim();
@@ -107,11 +135,7 @@ export class AddExpenseComponent implements OnInit {
         alert('يرجى إدخال اسم المستلم الجديد');
         return;
       }
-
-      // إضافة المستلم الجديد إلى الوحدة
       this.addNewRecipient(newReceiver);
-
-      // تحديث قيمة المستلم في النموذج
       this.addExpenseForm.get('receiver')?.setValue(newReceiver);
     }
 
@@ -123,16 +147,15 @@ export class AddExpenseComponent implements OnInit {
 
       if (this.addExpenseForm.valid) {
         const newExpense = this.addExpenseForm.value;
-        newExpense.date = this.formatDateToISOString(this.addExpenseForm.get('date')?.value);
+        newExpense.date = dbDate;
 
         this.http.post('http://localhost:3000/expenses', newExpense).subscribe({
           next: () => {
             this.successMessage = 'تم إضافة المصروف بنجاح';
             this.resetForm();
-            this.loadExpenses(); // ⬅️ إعادة تحميل المصروفات من الملف
+            this.loadExpenses();
             setTimeout(() => this.successMessage = '', 3000);
-          }
-          ,
+          },
           error: (err) => {
             this.errorMessage = 'حدث خطأ أثناء إضافة المصروف';
             console.error('Error saving expense:', err);
@@ -148,18 +171,27 @@ export class AddExpenseComponent implements OnInit {
   }
 
 
+
   loadExpenses(): void {
     this.http.get<any[]>('http://localhost:3000/expenses').subscribe({
       next: (data) => {
-      // ترتيب من الأحدث للأقدم
-      this.expenses = data.sort((a, b) => {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      });
+        // ترتيب من الأحدث للأقدم
+        this.expenses = data
+          .map(exp => ({
+            ...exp,
+            displayDate: this.formatDateToDDMMYYYY(
+              new Date(exp.date).getDate(),
+              new Date(exp.date).getMonth() + 1,
+              new Date(exp.date).getFullYear()
+            )
+          }))
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      this.existingDocumentNumbers = this.expenses
-        .filter(exp => exp.type === 'نموذج صرف' && exp.documentNumber)
-        .map(exp => exp.documentNumber.toString());
-    },
+
+        this.existingDocumentNumbers = this.expenses
+          .filter(exp => exp.type === 'نموذج صرف' && exp.documentNumber)
+          .map(exp => exp.documentNumber.toString());
+      },
       error: (err) => console.error('Error loading expenses from db.json:', err)
     });
   }
@@ -174,19 +206,23 @@ export class AddExpenseComponent implements OnInit {
     return null;
   }
 
-
   resetForm(): void {
     this.addExpenseForm.reset({
       unitName: '',
-      newReceiver: '', 
+      newReceiver: '',
       items: this.fb.array([]),
       receiver: '',
       type: '',
       documentNumber: '',
       attachment: null,
-      date: ''
+      dateForm: {
+        day: '',
+        month: '',
+        year: ''
+      }
     });
   }
+
 
   onUnitChange() {
     const selectedUnitName = this.addExpenseForm.get('unitName')?.value;
@@ -244,10 +280,11 @@ export class AddExpenseComponent implements OnInit {
     }
   }
 
-  formatDateToISOString(dateStr: string): string {
-    if (!dateStr) { return ''; }
-    if (dateStr.includes('T')) { return dateStr; }
-    const d = new Date(dateStr);
-    return d.toISOString();
+  formatDateToDDMMYYYY(day: number, month: number, year: number): string {
+    const dd = String(day).padStart(2, '0');
+    const mm = String(month).padStart(2, '0');
+    const yyyy = String(year);
+    return `${dd}/${mm}/${yyyy}`;
   }
+
 }

@@ -51,10 +51,20 @@
           <input type="file" class="form-control"
             (change)="onFileChange($event)" accept=".pdf,image/*" required>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-12">
           <label class="form-label">تاريخ الصرف</label>
-          <input type="date" class="form-control arabic-date" formControlName="date"
-            required>
+          <div class="row mb-3" formGroupName="dateForm">
+          <div class="d-flex gap-3">
+            <input type="number" class="form-control" formControlName="day"
+              placeholder="اليوم">
+            <input type="number" class="form-control" formControlName="month"
+              placeholder="الشهر">
+            <input type="number" class="form-control" formControlName="year"
+              placeholder="السنة">
+        </div>
+      </div>
+
+        
         </div>
       </div>
 
@@ -73,12 +83,7 @@
                   [value]="item.itemName">{{ item.itemName }}</option>
               </select>
             </div>
-            <div class="col-md-2">
-              <label class="form-label">رقم الصنف</label>
-              <input type="text" class="form-control"
-                [(ngModel)]="row.stockNumber" name="stockNumber{{i}}"
-                [ngModelOptions]="{standalone: true}" readonly>
-            </div>
+            
             <div class="col-md-2">
               <label class="form-label">الكمية</label>
               <input type="number" class="form-control"
@@ -155,7 +160,7 @@
         <td>{{ expense.receiver }}</td>
         <td>{{ expense.type }}</td>
         <td>{{ expense.documentNumber }}</td>
-        <td>{{ expense.date ? (expense.date | date:'yyyy/MM/dd') : '-' }}</td>
+          <td>{{ expense.displayDate }}</td>
         <td>
           <a *ngIf="expense.attachment" [href]="expense.attachment" download="attachment" target="_blank">تحميل الملف</a>
           <span *ngIf="!expense.attachment">لا يوجد</span>
